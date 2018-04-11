@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-3.0.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.1.xsd">
+
+    <context:annotation-config />
+    <context:component-scan base-package="jobs" />
+
+	<task:annotation-driven executor="batchTaskExecutor" scheduler="scheduling" exception-handler="myAsyncUncaughtExceptionHandler" />
+
+	<bean id="myAsyncUncaughtExceptionHandler" class="jobs.MyAsyncUncaughtExceptionHandler" />
+
+	<!-- By default when specifying @Async on a method, the executor that will be used is the one supplied to the 'annotation-driven' -->
+	<!-- the value attribute of the @Async annotation can be used when needing to indicate that an executor other than the default should be used -->
+	<!-- set up a default executor -->
+	<task:executor id="batchTaskExecutor" pool-size="10" queue-capacity="20" rejection-policy="CALLER_RUNS" keep-alive="3600" />
+	<!-- <task:executor id="executorWithPoolSizeRange" pool-size="5-25" queue-capacity="100" rejection-policy="DISCARD" keep-alive="3600" /> -->
+	<task:scheduler id="scheduling" pool-size="10" />
+
+	<task:scheduled-tasks scheduler="scheduling">
+		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
+  		<task:scheduled ref="jobs" method="import_hcv" cron="0 00 04 ? * *" />
+  		<!-- <task:scheduled ref="jobs" method="import_hcv" cron="0 44 15 ? * *" /> -->
+
+		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
+
+  		<task:scheduled ref="jobs" method="clear_ussd" fixed-delay="900000" />
+
+  		<!-- <task:scheduled ref="jobs" method="clear_sharing" cron="0 00 0 1 APR,MAY,JUN ?"  /> -->
+  		<task:scheduled ref="jobs" method="setDefaultBonus" cron="0 00 12 ? * *" />
+	</task:scheduled-tasks>
+
+    <bean id="transactionManager" class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+    <bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean" p:transactionManager-ref="transactionManager" />
+    <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher" p:jobRepository-ref="jobRepository" p:taskExecutor-ref="batchTaskExecutor" />
+
+	<batch:job id="cleanExpiredUssdRequestJob">
+	  <batch:step id="cleanUssdRequest">
+	  	<batch:tasklet ref="cleanExpiredUssdRequestTasklet" transaction-manager="transactionManager" />
+	  </batch:step>
+	</batch:job>
+
+	<batch:job id="importHVCJob">
+	  <batch:step id="importHVC">
+	  	<batch:tasklet ref="importHVCTasklet" transaction-manager="transactionManager" />
+	  </batch:step>
+	</batch:job>
+
+	<batch:job id="happyBirthdayWishesJob">
+	  <batch:step id="wishesNotificationThroughSms">
+	  	<batch:tasklet>
+	      <batch:chunk
+	        reader="allHVCsReader" processor="wishesNotificationProcessor" writer="wishesNotificationWriter" commit-interval="10">
+	      </batch:chunk>
+	    </batch:tasklet>
+	  </batch:step>
+	</batch:job>
+
+	<batch:job id="defaultBonusJob">
+	  <batch:step id="defaultBonus">
+	  	<batch:tasklet>
+	      <batch:chunk
+	        reader="allHVCsWithNoBonusReader" processor="defaultBonusProcessor" writer="defaultBonusWriter" commit-interval="1">
+	      </batch:chunk>
+	    </batch:tasklet>
+	  </batch:step>
+	</batch:job>
+
+	<bean id="allHVCsReader" class="jobs.HVCsReader">
+		<constructor-arg index="0" type="int" value="0" />
+   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
+
+	  	<property name="dataSource" ref="db_connection" />
+	  	<property name="rowMapper">
+	    	<bean class="dao.domain.model.HVCRowMapper" />
+	  	</property>
+	  	<!-- <property name="sql">
+	  		<value>
+	    		SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA
+	  		</value>
+		</property> -->
+	</bean>
+
+	<bean id="allHVCsWithNoBonusReader" class="jobs.HVCsReader">
+		<constructor-arg index="0" type="int" value="2" />
+   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
+
+	  	<property name="dataSource" ref="db_connection" />
+	  	<property name="rowMapper">
+	    	<bean class="dao.domain.model.HVCRowMapper" />
+	  	</property>
+	  	<!-- <property name="sql">
+	  		<value>
+	    		SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE BONUS = NULL
+	  		</value>
+		</property> -->
+	</bean>
+
+</beans>
