@@ -16,19 +16,17 @@ import com.google.common.base.Splitter;
 import connexions.AIRRequest;
 import dao.DAO;
 import dao.JdbcOperations.HVCDAOJdbc;
-import dao.JdbcOperations.RollBackDAOJdbc;
 import dao.JdbcOperations.USSDRequestDAOJdbc;
 import dao.JdbcOperations.USSDServiceDAOJdbc;
 import dao.domain.model.HVC;
-import dao.domain.model.RollBack;
 import dao.domain.model.USSDRequest;
 import dao.domain.model.USSDService;
 import filter.MSISDNValidator;
+import product.ProductActions;
 import product.ProductProperties;
 import product.USSDMenu;
 import tools.SMPPConnector;
 import util.BalanceAndDate;
-import util.DedicatedAccount;
 import util.OfferInformation;
 
 public class InputHandler {
@@ -125,8 +123,14 @@ public class InputHandler {
 	}
 
 	public void statut(MessageSource i18n, ProductProperties productProperties, DAO dao, USSDRequest ussd, Map<String, Object> modele) {
-		int[] offer_id = new int[] {Integer.parseInt(productProperties.getOffer_id().get(0)), Integer.parseInt(productProperties.getOffer_id().get(1)), Integer.parseInt(productProperties.getOffer_id().get(2)), Integer.parseInt(productProperties.getOffer_id().get(3))};
-		HashSet<OfferInformation> offers = new AIRRequest().getOffers(ussd.getMsisdn(), new int[][] {{offer_id[0], offer_id[0]}, {offer_id[1], offer_id[1]}, {offer_id[2], offer_id[2]}, {offer_id[3], offer_id[3]}}, false, null, false);
+		int[][] offer_id = new int[productProperties.getOffer_id().size()][2];
+		for(int i = 0; i<productProperties.getOffer_id().size(); i++) {
+			int offer = Integer.parseInt(productProperties.getOffer_id().get(i));
+			offer_id[i][0] = offer;
+			offer_id[i][1] = offer;
+		}
+
+		HashSet<OfferInformation> offers = new AIRRequest().getOffers(ussd.getMsisdn(), offer_id, false, null, false);
 
 		if((offers == null) || offers.size() == 0) {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, null), null, null, null, null);
@@ -153,50 +157,6 @@ public class InputHandler {
 				}
 			}
 		}
-	}
-
-	@SuppressWarnings("deprecation")
-	public int doActions(DAO dao, HVC hvc, int offer, int da, long volume) {
-		try {
-			if(new HVCDAOJdbc(dao).saveOneHVC(hvc) > 0) {
-				Date expires = new Date();
-				expires.setDate(expires.getDate() + 1);
-				expires.setSeconds(59);expires.setMinutes(59);expires.setHours(23);
-
-				HashSet<BalanceAndDate> balances = new HashSet<BalanceAndDate>();
-				if(da == 0) balances.add(new BalanceAndDate(da, volume, expires));
-				else balances.add(new DedicatedAccount(da, volume, expires));
-
-				// update Anumber Balance
-				if(new AIRRequest().updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA")) {
-					// update Anumber Offer
-					if(new AIRRequest().updateOffer(hvc.getValue(), offer, null, expires, null, "eBA")) {
-						return 0;
-					}
-					// rollback
-					else {
-						balances.clear();
-						if(da == 0) balances.add(new BalanceAndDate(da, -volume, null));
-						else balances.add(new DedicatedAccount(da, -volume, null));
-
-						if(new AIRRequest().updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA"));
-						else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-					}
-				}
-				// rollback
-				else {
-					new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-				}
-			}
-			else {
-				return 1;
-			}
-
-		} catch(Throwable th) {
-
-		}
-
-		return -1;
 	}
 
 	public void endStep(DAO dao, USSDRequest ussd, Map<String, Object> modele, ProductProperties productProperties, String messageA, String Anumber, String messageB, String Bnumber, String senderName) {
@@ -239,6 +199,7 @@ public class InputHandler {
 		HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn());
 
 		int choice = Integer.parseInt(inputs.get(1));
+		// set bonus choice (data or voice)
 		hvc.setBonus(choice);
 
 		int offer = Integer.parseInt(productProperties.getOffer_id().get(hvc.getSegment() - 1));
@@ -255,7 +216,7 @@ public class InputHandler {
 			volume = Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1));			
 		}
 		
-		int result = doActions(dao, hvc, offer, da, volume);
+		int result = (new ProductActions()).doActions(dao, hvc, offer, da, volume);
 
 		if(result == 0) {
 			Date expires = new Date();

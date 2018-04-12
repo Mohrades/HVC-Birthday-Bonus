@@ -50,7 +50,7 @@ public class ScheduledTasks {
 		execute(cleanExpiredUssdRequestJob);
 	}
 
-	public void import_hcv() {
+	public void import_hcvs() {
 		execute(importHVCJob);
 	}
 

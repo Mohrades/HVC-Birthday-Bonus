@@ -32,6 +32,9 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 	@Value("#{appConfig['data.da']}")
 	private short data_da;
 
+	@Value("#{appConfig['customer.segment']}")
+	private String customer_segment;
+
 	private List<String> offer_id;
 
 	private List<String> data_volume;
@@ -150,6 +153,10 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 
 	public byte getMsisdn_length() {
 		return msisdn_length;
+	}
+
+	public String getCustomer_segment() {
+		return customer_segment;
 	}
 
 	public short getVoice_da() {

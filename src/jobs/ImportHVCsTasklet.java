@@ -22,8 +22,8 @@ import dao.domain.model.HVC;
 import product.ProductProperties;
 import util.AccountDetails;
 
-@Component("importHVCTasklet")
-public class ImportHVCTasklet implements Tasklet {
+@Component("importHVCsTasklet")
+public class ImportHVCsTasklet implements Tasklet {
 
 	@Autowired
 	private DAO dao;
@@ -40,7 +40,7 @@ public class ImportHVCTasklet implements Tasklet {
 			Connection connexion = null;
 			PreparedStatement ps = null;
 			ResultSet rs = null;
-			
+
 			HashSet <HVC> allMSISDN_Today_Is_BIRTHDATE = new HashSet <HVC>();
 
 			try {
@@ -95,7 +95,8 @@ public class ImportHVCTasklet implements Tasklet {
 
 				// on lit la table PRICEPLAN.VALUE_BAND_LIST [MSISDN, CUSTOMER_SEGMENT]
 				// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE (((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100')) AND (ROWNUM < 10000))");
-				ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE ((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100'))");
+				// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE ((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100'))");
+				ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment());
 				rs = ps.executeQuery();
 				// Liste des elements
 				while (rs.next()) {
