@@ -23,8 +23,8 @@
 
 	<task:scheduled-tasks scheduler="scheduling">
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
-  		<task:scheduled ref="jobs" method="import_hcvs" cron="0 00 04 ? * *" />
-  		<!-- <task:scheduled ref="jobs" method="import_hcvs" cron="0 44 15 ? * *" /> -->
+  		<!-- <task:scheduled ref="jobs" method="import_hcvs" cron="0 00 04 ? * *" /> -->
+  		<task:scheduled ref="jobs" method="import_hcvs" cron="30 08 18 ? * *" />
 
 		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
 
