@@ -45,7 +45,8 @@ public class ImportHVCsTasklet implements Tasklet {
 
 			try {
 				Class.forName("oracle.jdbc.driver.OracleDriver"); // chargement du pilote JDBC
-				connexion = DriverManager.getConnection("jdbc:oracle:thin:@irmdb01.mtn.bj:1521:ISLDB1", "aplimanuser", "CI1617o#L#20"); // ouverture connexion
+				// connexion = DriverManager.getConnection("jdbc:oracle:thin:@irmdb01.mtn.bj:1521:ISLDB1", "aplimanuser", "CI1617o#L#20"); // ouverture connexion
+				connexion = DriverManager.getConnection("jdbc:oracle:thin:@ga-exa-scan.mtn.bj:1521/isldg", "aplimanuser", "CI1617o#L#20"); // ouverture connexion
 				connexion.setAutoCommit(false); // début transaction
 				connexion.setReadOnly(true); // en mode lecture seule
 

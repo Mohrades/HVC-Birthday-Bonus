@@ -26,8 +26,8 @@
 		<!-- java.lang.IllegalArgumentException: Cron expression must consist of 6 fields (found 7 in "0 00 0 1 APR,MAY,JUN ? 2018") -->
 
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
-  		<!-- <task:scheduled ref="jobs" method="import_hcvs" cron="0 00 04 ? * *" /> -->
-  		<task:scheduled ref="jobs" method="import_hcvs" cron="30 08 18 ? * *" />
+  		<task:scheduled ref="jobs" method="import_hcvs" cron="0 00 04 ? * *" />
+  		<!-- <task:scheduled ref="jobs" method="import_hcvs" cron="30 08 18 ? * *" /> -->
 
 		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
 
