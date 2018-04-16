@@ -2,7 +2,7 @@
     <wb-module deploy-name="HVC_Birthday_Bonus">
         <wb-resource deploy-path="/" source-path="/WebContent" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
-        <property name="context-root" value="HVC_Birthday_Bonus"/>
         <property name="java-output-path" value="/HVC_Birthday_Bonus/build/classes"/>
+        <property name="context-root" value="testapp"/>
     </wb-module>
 </project-modules>
