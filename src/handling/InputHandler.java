@@ -143,26 +143,24 @@ public class InputHandler {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, null), null, null, null, null);
 		}
 		else {
-			BalanceAndDate balance = new AIRRequest().getBalanceAndDate(ussd.getMsisdn(), (int) productProperties.getData_da());
+			BalanceAndDate balance = (hvc.getBonus() == 2) ? new AIRRequest().getBalanceAndDate(ussd.getMsisdn(), (int) productProperties.getData_da()) : (hvc.getBonus() == 1) ? new AIRRequest().getBalanceAndDate(ussd.getMsisdn(), (int) productProperties.getVoice_da()) : null;
 
 			if(balance == null) {
-				balance = new AIRRequest().getBalanceAndDate(ussd.getMsisdn(), (int) productProperties.getVoice_da());
-
-				if(balance == null) {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, null), null, null, null, null);
+				endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, null), null, null, null, null);
+			}
+			else {
+				if(hvc.getBonus() == 2) {
+					long volume = (long) (((double)balance.getAccountValue()) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
+					if(volume >= 1024) {
+						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {new Formatter().format("%.2f", volume/1024), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
+					}
+					else {
+						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {volume, "Mo", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
+					}					
 				}
 				else {
 					long volume = (long) (((double)balance.getAccountValue()) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {volume/(60*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
-				}
-			}
-			else {
-				long volume = (long) (((double)balance.getAccountValue()) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
-				if(volume >= 1024) {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {new Formatter().format("%.2f", volume/1024), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
-				}
-				else {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {volume, "Mo", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {volume/(60*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");					
 				}
 			}
 		}
