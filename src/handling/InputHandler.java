@@ -123,6 +123,13 @@ public class InputHandler {
 	}
 
 	public void statut(MessageSource i18n, ProductProperties productProperties, DAO dao, USSDRequest ussd, Map<String, Object> modele) {
+		HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), -1);
+
+		if(hvc == null) {
+			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, null), null, null, null, null);
+			return;
+		}
+
 		int[][] offer_id = new int[productProperties.getOffer_id().size()][2];
 		for(int i = 0; i<productProperties.getOffer_id().size(); i++) {
 			int offer = Integer.parseInt(productProperties.getOffer_id().get(i));
@@ -145,15 +152,17 @@ public class InputHandler {
 					endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, null), null, null, null, null);
 				}
 				else {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {balance.getAccountValue()/(10*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
+					long volume = (long) (((double)balance.getAccountValue()) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {volume/(60*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
 				}
 			}
 			else {
-				if((balance.getAccountValue()/(10*100)) >= 1024) {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {new Formatter().format("%.2f", ((double)(balance.getAccountValue()/(10*100)))/1024), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
+				long volume = (long) (((double)balance.getAccountValue()) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
+				if(volume >= 1024) {
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {new Formatter().format("%.2f", volume/1024), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
 				}
 				else {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {balance.getAccountValue()/(10*100), "Mo", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {volume, "Mo", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, null), ussd.getMsisdn(), null, null, "HVC");
 				}
 			}
 		}
@@ -196,7 +205,7 @@ public class InputHandler {
 
 	@SuppressWarnings("deprecation")
 	public void setBonus(DAO dao, USSDRequest ussd, MessageSource i18n, ProductProperties productProperties, Map<String, Object> modele, List<String> inputs) {
-		HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn());
+		HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), 0);
 
 		int choice = Integer.parseInt(inputs.get(1));
 		// set bonus choice (data or voice)
@@ -224,7 +233,7 @@ public class InputHandler {
 			expires.setSeconds(59);expires.setMinutes(59);expires.setHours(23);
 
 			if(choice == 2) {
-				volume = volume / (10*100);
+				volume = (long) (((double)volume) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
 
 				if(volume >= 1024) {
 					endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.data.bonus", new Object [] {new Formatter().format("%.2f", ((double)volume)/1024), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, null), ussd.getMsisdn(), null, null, "HVC");
@@ -234,7 +243,8 @@ public class InputHandler {
 				}
 			}
 			else {
-				endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.voice.bonus", new Object [] {volume/(10*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, null), ussd.getMsisdn(), null, null, "HVC");
+				volume = (long) (((double)volume) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
+				endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.voice.bonus", new Object [] {volume/(60*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, null), ussd.getMsisdn(), null, null, "HVC");
 			}
 		}
 		else if(result == 1) {

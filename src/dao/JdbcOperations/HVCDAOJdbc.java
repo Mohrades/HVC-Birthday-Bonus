@@ -49,8 +49,21 @@ public class HVCDAOJdbc {
 		return hvcs.isEmpty() ? null : hvcs.get(0);
 	}
 
-	public HVC getOneHVC(String msisdn) {
-		List<HVC> hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "') AND (MSISDN = '" + msisdn + "'))", new HVCRowMapper());
+	@SuppressWarnings("deprecation")
+	public HVC getOneHVC(String msisdn, int expires) {
+		List<HVC> hvcs = null;
+
+		if(expires == 0) {
+			hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "') AND (MSISDN = '" + msisdn + "'))", new HVCRowMapper());
+		}
+		else {
+			Date now = new Date();
+			Date yesterday = new Date();
+			yesterday.setDate(yesterday.getDate() - 1);
+
+			hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE (((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(yesterday) + "') AND (MSISDN = '" + msisdn + "')) OR ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(now) + "') AND (MSISDN = '" + msisdn + "'))) ORDER BY BIRTH_DATE DESC", new HVCRowMapper());
+		}
+
 		return hvcs.isEmpty() ? null : hvcs.get(0);
 	}
 

@@ -30,7 +30,8 @@ public class DefaultBonusWriter implements ItemWriter<HVC> {
 
 			for(HVC hvc : hvcs) {
 				try {
-					new SMPPConnector().submitSm("HVC", hvc.getValue().substring((productProperties.getMcc() + "").length()), i18n.getMessage("sms.voice.bonus", new Object [] {Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1)), dateFormat.format(hvc.getBonus_expires_in())}, null, null));
+					long volume = (long) (((double)Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1))) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
+					new SMPPConnector().submitSm("HVC", hvc.getValue().substring((productProperties.getMcc() + "").length()), i18n.getMessage("sms.voice.bonus", new Object [] {volume/(60*100), dateFormat.format(hvc.getBonus_expires_in())}, null, null));
 
 				} catch(NullPointerException ex) {
 

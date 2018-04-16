@@ -32,14 +32,17 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 	@Value("#{appConfig['data.da']}")
 	private short data_da;
 
-	@Value("#{appConfig['customer.segment']}")
-	private String customer_segment;
+	private List<String> customer_segment_list;
+
+	@Value("#{appConfig['customer.segment.filter']}")
+	private String customer_segment_filter;
 
 	private List<String> offer_id;
 
 	private List<String> data_volume;
-
 	private List<String> voice_volume;
+	private List<String> data_volume_rate;
+	private List<String> voice_volume_rate;
 
 	private List<String> Anumber_serviceClass_include_filter;
 	private List<String> Anumber_db_include_filter;
@@ -58,6 +61,13 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		}
 	 }
 
+	@Value("#{appConfig['customer.segment.list']}")
+	public void setCustomer_segment_list(final String customer_segment_list) {
+		if(isSet(customer_segment_list)) {
+			this.customer_segment_list = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(customer_segment_list);
+		}
+	}
+
 	@Value("#{appConfig['data.volume']}")
 	public void setData_volume(final String data_volume) {
 		if(isSet(data_volume)) {
@@ -65,10 +75,24 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		}
 	}
 
+	@Value("#{appConfig['data.volume.rate']}")
+	public void setData_volume_rate(final String data_volume_rate) {
+		if(isSet(data_volume_rate)) {
+			this.data_volume_rate = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(data_volume_rate);
+		}
+	}
+
 	@Value("#{appConfig['voice.volume']}")
 	public void setVoice_volume(final String voice_volume) {
 		if(isSet(voice_volume)) {
 			this.voice_volume = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(voice_volume);
+		}
+	}
+
+	@Value("#{appConfig['voice.volume']}")
+	public void setVoice_volume_rate(final String voice_volume_rate) {
+		if(isSet(voice_volume_rate)) {
+			this.voice_volume_rate = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(voice_volume_rate);
 		}
 	}
 
@@ -155,8 +179,12 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		return msisdn_length;
 	}
 
-	public String getCustomer_segment() {
-		return customer_segment;
+	public List<String> getCustomer_segment_list() {
+		return customer_segment_list;
+	}
+
+	public String getCustomer_segment_filter() {
+		return customer_segment_filter;
 	}
 
 	public short getVoice_da() {
@@ -171,8 +199,16 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		return voice_volume;
 	}
 
+	public List<String> getVoice_volume_rate() {
+		return voice_volume_rate;
+	}
+
 	public List<String> getData_volume() {
 		return data_volume;
+	}
+
+	public List<String> getData_volume_rate() {
+		return data_volume_rate;
 	}
 
 	public List<String> getOffer_id() {
