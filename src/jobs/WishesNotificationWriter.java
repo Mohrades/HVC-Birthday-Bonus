@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Component;
 
-import dao.domain.model.HVC;
+import domain.models.HVC;
 
 @Component("wishesNotificationWriter")
 public class WishesNotificationWriter implements ItemWriter<HVC> {

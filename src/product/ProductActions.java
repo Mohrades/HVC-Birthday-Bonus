@@ -5,10 +5,10 @@ import java.util.HashSet;
 
 import connexions.AIRRequest;
 import dao.DAO;
-import dao.JdbcOperations.HVCDAOJdbc;
-import dao.JdbcOperations.RollBackDAOJdbc;
-import dao.domain.model.HVC;
-import dao.domain.model.RollBack;
+import dao.queries.HVCDAOJdbc;
+import dao.queries.RollBackDAOJdbc;
+import domain.models.HVC;
+import domain.models.RollBack;
 import util.BalanceAndDate;
 import util.DedicatedAccount;
 

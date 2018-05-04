@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
-import dao.domain.model.HVC;
+import domain.models.HVC;
 import product.ProductProperties;
 import tools.SMPPConnector;
 

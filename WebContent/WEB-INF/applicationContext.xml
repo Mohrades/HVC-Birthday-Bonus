@@ -33,7 +33,43 @@
   	</context:component-scan>
 
 	<bean id="dao" class="dao.DAO">
-    	<property name="dataSource" ref="db_connection" />
+		<!-- <constructor-arg><null /></constructor-arg>
+		<constructor-arg value="10" /> -->
+
+  		<!-- <constructor-arg ref="dataSource" />
+  		<constructor-arg ref="aclCache" />
+  		<constructor-arg>
+    		<bean class="org.springframework.security.acls.domain.AclAuthorizationStrategyImpl">
+		      	<constructor-arg>
+			        <list>
+			          <ref local="roleAdmin" />
+			          <ref local="roleAdmin" />
+			          <ref local="roleAdmin" />
+			        </list>
+		      	</constructor-arg>
+    		</bean>
+  		</constructor-arg>
+  		<constructor-arg>
+    		<bean class="org.springframework.security.acls.domain.ConsoleAuditLogger" />
+  		</constructor-arg> -->
+  		
+  		<!-- <constructor-arg>
+    		<bean class="org.springframework.cache.ehcache.EhCacheFactoryBean">
+      			<property name="cacheManager">
+      				<bean class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" />
+        		</property>
+        		<property name="cacheName" value="aclCache" />
+      		</bean>
+  		</constructor-arg> -->
+  
+		<!-- <constructor-arg index="0" type="com.mchange.v2.c3p0.ComboPooledDataSource" ref="db_connection" /> -->
+		<constructor-arg ref="db_connection" />
+		<!-- <constructor-arg index="0" type="com.mchange.v2.c3p0.ComboPooledDataSource">
+			<ref bean="db_connection" />
+			<ref bean="db_connection" />
+    	</constructor-arg> -->
+
+    	<!-- <property name="dataSource" ref="db_connection" /> -->
    	</bean>
 
     <!-- DB data source. -->

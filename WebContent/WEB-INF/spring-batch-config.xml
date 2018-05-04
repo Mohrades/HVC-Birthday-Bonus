@@ -79,7 +79,7 @@
 
 	  	<property name="dataSource" ref="db_connection" />
 	  	<property name="rowMapper">
-	    	<bean class="dao.domain.model.HVCRowMapper" />
+	    	<bean class="dao.mapping.HVCRowMapper" />
 	  	</property>
 	  	<!-- <property name="sql">
 	  		<value>
@@ -94,7 +94,7 @@
 
 	  	<property name="dataSource" ref="db_connection" />
 	  	<property name="rowMapper">
-	    	<bean class="dao.domain.model.HVCRowMapper" />
+	    	<bean class="dao.mapping.HVCRowMapper" />
 	  	</property>
 	  	<!-- <property name="sql">
 	  		<value>

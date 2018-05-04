@@ -21,8 +21,8 @@
   <servlet>
     <servlet-name>api</servlet-name>
     <servlet-class>
-			org.springframework.web.servlet.DispatcherServlet
-		</servlet-class>
+		org.springframework.web.servlet.DispatcherServlet
+	</servlet-class>
     <init-param>
       <param-name>publishContext</param-name>
       <param-value>false</param-value>
