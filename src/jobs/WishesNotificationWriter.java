@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
+import connexions.AIRRequest;
 import domain.models.HVC;
 import product.ProductProperties;
 import tools.SMPPConnector;
+import util.AccountDetails;
 
 @Component("wishesNotificationWriter")
 public class WishesNotificationWriter implements ItemWriter<HVC> {
@@ -29,6 +31,9 @@ public class WishesNotificationWriter implements ItemWriter<HVC> {
 			for(HVC hvc : hvcs) {
 				if(hvc != null) {
 					try {
+						AccountDetails accountDetails = new AIRRequest().getAccountDetails(hvc.getValue());
+						hvc.setLanguage((accountDetails == null) ? 1 : accountDetails.getLanguageIDCurrent());
+
 						/*new SMPPConnector().submitSm("HVC", hvc.getValue().substring((productProperties.getMcc() + "").length()), i18n.getMessage("sms_birthday", new Object [] {hvc.getName()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));*/
 						new SMPPConnector().submitSm("HVC", hvc.getValue().substring((productProperties.getMcc() + "").length()), i18n.getMessage("sms_birthday", new Object [] {hvc.getName()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 

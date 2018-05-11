@@ -27,6 +27,7 @@ import product.ProductActions;
 import product.ProductProperties;
 import product.USSDMenu;
 import tools.SMPPConnector;
+import util.AccountDetails;
 import util.BalanceAndDate;
 import util.OfferInformation;
 
@@ -41,6 +42,9 @@ public class InputHandler {
 		USSDRequest ussd = null;
 		HVC hvc = null;
 
+		AccountDetails accountDetails = new AIRRequest().getAccountDetails(parameters.get("msisdn"));
+		int language = (accountDetails == null) ? 1 : accountDetails.getLanguageIDCurrent();
+
 		try {
 			long sessionId = Long.parseLong(parameters.get("sessionid"));
 			ussd = new USSDRequestDAOJdbc(dao).getOneUSSD(sessionId, parameters.get("msisdn"));
@@ -53,7 +57,7 @@ public class InputHandler {
 
 				if((service == null) || (((service.getStart_date() != null) && (now.before(service.getStart_date()))) || ((service.getStop_date() != null) && (now.after(service.getStop_date()))))) {
 					modele.put("next", false);
-					modele.put("message", i18n.getMessage("service.unavailable", null, null, Locale.FRENCH));
+					modele.put("message", i18n.getMessage("service.unavailable", null, null, (language == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					return;
 				}
 				else {
@@ -62,10 +66,12 @@ public class InputHandler {
 
 					if(hvc == null) {
 						modele.put("next", false);
-						modele.put("message", i18n.getMessage("service.disabled", null, null, Locale.FRENCH));
+						modele.put("message", i18n.getMessage("service.disabled", null, null, (language == 2) ? Locale.ENGLISH : Locale.FRENCH));
 						return;						
 					}
 					else {
+						hvc.setLanguage(language);
+
 						// logging conflicting
 						if(hvc.getId() == 0) {
 							modele.put("next", false);
@@ -87,6 +93,7 @@ public class InputHandler {
 			else {
 				// check msisdn is alive hvc (only today)
 				hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), 0);
+				hvc.setLanguage(language);
 
 				ussd.setStep(ussd.getStep() + 1);
 				ussd.setInput((ussd.getInput() + "*" + parameters.get("input").trim()).trim());
