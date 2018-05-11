@@ -50,7 +50,7 @@ public class USSDFlow {
 
 			transitions : for(String input : inputs) {
 				if((input == null) || (input.isEmpty()) ||(input.length() == 0)) {
-					return handleInvalidInput(i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+					return handleInvalidInput(i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 				}
 
 				// on-entry : verify service code
@@ -60,7 +60,7 @@ public class USSDFlow {
 						index++;
 					}
 					else {
-						return handleInvalidInput(i18n.getMessage("service.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+						return handleInvalidInput(i18n.getMessage("service.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 				}
 				// transition : verify each step of the flow
@@ -91,7 +91,7 @@ public class USSDFlow {
 							continue transitions;
 						}
 						else if(children.isEmpty()) {
-							return handleInvalidInput(i18n.getMessage("integer.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+							return handleInvalidInput(i18n.getMessage("integer.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 						}
 						else {
 							children = currentState.getChildren();
@@ -116,14 +116,14 @@ public class USSDFlow {
 										}
 										else {
 											if(children.size() == 1) {
-												return handleInvalidInput(i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+												return handleInvalidInput(i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 											}
 										}
 									}
 									else if(element.getAttributeValue("type").equals("text")) {
 										if(input.isEmpty()) {
 											if(children.size() == 1) {
-												return handleInvalidInput(i18n.getMessage("argument.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+												return handleInvalidInput(i18n.getMessage("argument.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 											}
 										}
 										else {
@@ -141,12 +141,12 @@ public class USSDFlow {
 
 										} catch(NullPointerException|NumberFormatException ex) {
 											if(children.size() == 1) {
-												return handleInvalidInput(i18n.getMessage("integer.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+												return handleInvalidInput(i18n.getMessage("integer.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 											}
 
 										} catch(Throwable ex) {
 											if(children.size() == 1) {
-												return handleInvalidInput(i18n.getMessage("integer.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+												return handleInvalidInput(i18n.getMessage("integer.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 											}
 										}
 									}
@@ -156,10 +156,22 @@ public class USSDFlow {
 
 											if((element.getAttributeValue("ton").equals("International") && (msisdn.startsWith(productProperties.getMcc() + "")) && (((productProperties.getMcc() + "").length() + productProperties.getMsisdn_length()) == msisdn.length())) || ((element.getAttributeValue("ton").equals("National")) && (productProperties.getMsisdn_length() == msisdn.length()))) {
 											/*if((element.getAttributeValue("ton").equals("International")) || ((element.getAttributeValue("ton").equals("National")) && (webAppProperties.getMsisdn_length() == msisdn.length()))) {*/
-												if((element.getAttributeValue("network") == null) || (element.getAttributeValue("network").isEmpty()) || (element.getAttributeValue("network").equals("off"))) {
+												if((element.getAttributeValue("network") == null) || (element.getAttributeValue("network").isEmpty())) {
 													currentState = element;
 													tree.add(step + "");
 													continue transitions;
+												}
+												else if(element.getAttributeValue("network").equals("off")) {
+													if(((element.getAttributeValue("ton").equals("National")) && !(new MSISDNValidator()).onNet(productProperties, productProperties.getMcc() + "" + msisdn)) || ((element.getAttributeValue("ton").equals("International")) && !(new MSISDNValidator()).onNet(productProperties, msisdn))) {
+														currentState = element;
+														tree.add(step + "");
+														continue transitions;
+													}
+													else {
+														if(children.size() == 1) {
+															return handleInvalidInput(i18n.getMessage("msisdn.offnet.required", new Object[] {productProperties.getGsm_name()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
+														}
+													}
 												}
 												else if(element.getAttributeValue("network").equals("on")) {
 													if(((element.getAttributeValue("ton").equals("National")) && (new MSISDNValidator()).onNet(productProperties, productProperties.getMcc() + "" + msisdn)) || ((element.getAttributeValue("ton").equals("International")) && (new MSISDNValidator()).onNet(productProperties, msisdn))) {
@@ -169,36 +181,36 @@ public class USSDFlow {
 													}
 													else {
 														if(children.size() == 1) {
-															return handleInvalidInput(i18n.getMessage("msisdn.onnet.required", new Object[] {productProperties.getGsm_name()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+															return handleInvalidInput(i18n.getMessage("msisdn.onnet.required", new Object[] {productProperties.getGsm_name()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 														}
 													}
 												}
 											}
 											else {
 												if(children.size() == 1) {
-													return handleInvalidInput(i18n.getMessage("msisdn.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+													return handleInvalidInput(i18n.getMessage("msisdn.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 												}
 											}
 
 										} catch(NullPointerException|NumberFormatException ex) {
 											if(children.size() == 1) {
-												return handleInvalidInput(i18n.getMessage("msisdn.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+												return handleInvalidInput(i18n.getMessage("msisdn.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 											}
 
 										} catch(Throwable ex) {
 											if(children.size() == 1) {
-												return handleInvalidInput(i18n.getMessage("msisdn.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+												return handleInvalidInput(i18n.getMessage("msisdn.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 											}
 										}
 									}									
 								}
 							}
 
-							return handleInvalidInput(i18n.getMessage("argument.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+							return handleInvalidInput(i18n.getMessage("argument.required", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 						}
 					}
 					else {
-						return handleInvalidInput(i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+						return handleInvalidInput(i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 				}
 			}
@@ -217,35 +229,31 @@ public class USSDFlow {
 
 				if(transitions.isEmpty()) {
 					// volume voice
-					long volume_voice = Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1));
-					volume_voice = (long) (((double)volume_voice) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
-					
+					 long volume_voice = (long) (((double)Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1))) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
+
 					// volume data
-					long volume_data = Long.parseLong(productProperties.getData_volume().get(hvc.getSegment() - 1));
-					volume_data = (long) (((double)volume_data) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
-					
+					long volume_data = (long) (((double)Long.parseLong(productProperties.getData_volume().get(hvc.getSegment() - 1))) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
+
 					if(volume_data >= 1024) {
-						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume_voice/(60*100), new Formatter().format("%.2f", ((double)volume_data)/1024), "Go"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume_voice/(60*100), new Formatter().format("%.2f", ((double)volume_data)/1024), "Go"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 					else {
-						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume_voice/(60*100), volume_data, "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume_voice/(60*100), volume_data, "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 				}
 				else if(transitions.equalsIgnoreCase(".1")) {
-					long volume = Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1));
-					volume = (long) (((double)volume) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
+					long volume = (long) (((double)Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1))) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
 
-					modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume/(60*100)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+					modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume/(60*100)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 				}
 				else if(transitions.equalsIgnoreCase(".2")) {
-					long volume = Long.parseLong(productProperties.getData_volume().get(hvc.getSegment() - 1));
-					volume = (long) (((double)volume) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
+					long volume = (long) (((double)Long.parseLong(productProperties.getData_volume().get(hvc.getSegment() - 1))) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
 
 					if(volume >= 1024) {
-						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {new Formatter().format("%.2f", ((double)volume)/1024), "Go"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {new Formatter().format("%.2f", ((double)volume)/1024), "Go"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 					else {
-						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume, "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume, "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 				}
 			}
@@ -266,7 +274,7 @@ public class USSDFlow {
 
 	public void handleException(Map<String, Object> modele, MessageSource i18n, HVC hvc) {
 		modele.put("status", -1);
-		modele.put("message", i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : null));
+		modele.put("message", i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 	}
 
 	public Map<String, Object> handleInvalidInput(String message) {

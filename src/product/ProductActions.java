@@ -32,10 +32,12 @@ public class ProductActions {
 				if(da == 0) balances.add(new BalanceAndDate(da, volume, expires));
 				else balances.add(new DedicatedAccount(da, volume, expires));
 
+				AIRRequest request = new AIRRequest();
+
 				// update Anumber Balance
-				if(new AIRRequest().updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA")) {
+				if(request.updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA")) {
 					// update Anumber Offer
-					if(new AIRRequest().updateOffer(hvc.getValue(), offer, null, expires, null, "eBA")) {
+					if(request.updateOffer(hvc.getValue(), offer, null, expires, null, "eBA")) {
 						return 0;
 					}
 					// rollback
@@ -44,13 +46,17 @@ public class ProductActions {
 						if(da == 0) balances.add(new BalanceAndDate(da, -volume, null));
 						else balances.add(new DedicatedAccount(da, -volume, null));
 
-						if(new AIRRequest().updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA"));
-						else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+						if(request.updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA"));
+						else {
+							if(request.isSuccessfully()) new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+							else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+						}
 					}
 				}
 				// rollback
 				else {
-					new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+					if(request.isSuccessfully()) new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+					else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
 				}
 			}
 			else {

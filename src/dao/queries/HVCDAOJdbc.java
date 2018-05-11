@@ -32,13 +32,20 @@ public class HVCDAOJdbc {
 				// getJdbcTemplate().update("INSERT INTO HVC_BIRTHDAY_BONUS_MSISDN_EBA (MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE) VALUES('" + hvc.getValue() + "','" + hvc.getName().replace("'", "\'") + "'," + hvc.getSegment() + "," + hvc.getLanguage() + ",'" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "')");
 			}
 			else if(hvc.getId() > 0) {
-				return getJdbcTemplate().update("UPDATE HVC_BIRTHDAY_BONUS_MSISDN_EBA SET BONUS = " + hvc.getBonus() + ", BONUS_EXPIRES_IN = TIMESTAMP '" + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(hvc.getBonus_expires_in()) + "', LAST_UPDATE_TIME = TIMESTAMP '" + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date()) + "' WHERE ((ID = " + hvc.getId() + ") AND (BONUS = NULL))");
+				if((hvc.getBonus() > 0) && (hvc.getBonus_expires_in() != null)) {
+					return getJdbcTemplate().update("UPDATE HVC_BIRTHDAY_BONUS_MSISDN_EBA SET BONUS = " + hvc.getBonus() + ", BONUS_EXPIRES_IN = TIMESTAMP '" + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(hvc.getBonus_expires_in()) + "', LAST_UPDATE_TIME = TIMESTAMP '" + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date()) + "' WHERE ((ID = " + hvc.getId() + ") AND (BONUS IS NULL))");
+				}
+				else return -1;
+			}
+			else {
+				return -1;
 			}
 
 		} catch(EmptyResultDataAccessException emptyEx) {
+			return -1;
 
 		} catch(Throwable th) {
-
+			return -1;
 		}
 
 		return 0;

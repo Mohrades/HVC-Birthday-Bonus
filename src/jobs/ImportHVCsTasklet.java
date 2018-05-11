@@ -109,7 +109,8 @@ public class ImportHVCsTasklet implements Tasklet {
 					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE (((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100')) AND (ROWNUM < 10000))");
 					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE ((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100'))");
 					// ps = connexion.prepareStatement("SELECT MSISDN,UPPER(TRIM(CUSTOMER_SEGMENT)) FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
-					ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
+					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
+					ps = connexion.prepareStatement(productProperties.getCustomer_segment_filter());
 					rs = ps.executeQuery();
 					// Liste des elements
 					while (rs.next()) {

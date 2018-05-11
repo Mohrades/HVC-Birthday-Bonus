@@ -21,16 +21,19 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 	@Value("#{appConfig['gsm.short_code']}")
 	private short sc;
 
+	@Value("#{appConfig['sms.notifications.header']}")
+	private String sms_notifications_header;
+
 	private List<String> mnc;
 
 	@Value("#{appConfig['msisdn.length']}")
 	private byte msisdn_length;
 
 	@Value("#{appConfig['voice.da']}")
-	private short voice_da;
+	private int voice_da;
 
 	@Value("#{appConfig['data.da']}")
-	private short data_da;
+	private int data_da;
 
 	private List<String> customer_segment_list;
 
@@ -89,7 +92,7 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		}
 	}
 
-	@Value("#{appConfig['voice.volume']}")
+	@Value("#{appConfig['voice.volume.rate']}")
 	public void setVoice_volume_rate(final String voice_volume_rate) {
 		if(isSet(voice_volume_rate)) {
 			this.voice_volume_rate = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(voice_volume_rate);
@@ -171,6 +174,10 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		return sc;
 	}
 
+	public String getSms_notifications_header() {
+		return sms_notifications_header;
+	}
+
 	public List<String> getMnc() {
 		return mnc;
 	}
@@ -187,11 +194,11 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		return customer_segment_filter;
 	}
 
-	public short getVoice_da() {
+	public int getVoice_da() {
 		return voice_da;
 	}
 
-	public short getData_da() {
+	public int getData_da() {
 		return data_da;
 	}
 

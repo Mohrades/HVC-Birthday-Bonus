@@ -59,6 +59,10 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/xstream-1.4.7.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ZXing Core-3.3.0.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/AIR.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

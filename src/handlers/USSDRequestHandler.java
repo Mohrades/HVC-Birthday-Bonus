@@ -79,11 +79,11 @@ public class USSDRequestHandler {
 
 		} catch(NullPointerException e) {
 			modele.put("next", false);
-			modele.put("message", i18n.getMessage("error", null, "Desole, veuillez reessayer plus tard...", null));
+			modele.put("message", i18n.getMessage("error", null, "Desole, veuillez reessayer plus tard...", Locale.FRENCH));
 
 		} catch(Throwable e) {
 			modele.put("next", false);
-			modele.put("message", i18n.getMessage("error", null, "Desole, veuillez reessayer plus tard...", Locale.UK));
+			modele.put("message", i18n.getMessage("error", null, "Desole, veuillez reessayer plus tard...", Locale.FRENCH));
 		}
 
 		// on retourne le ModelAndView
