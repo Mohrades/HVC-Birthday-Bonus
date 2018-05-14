@@ -67,7 +67,7 @@ public class InputHandler {
 					if(hvc == null) {
 						modele.put("next", false);
 						modele.put("message", i18n.getMessage("service.disabled", null, null, (language == 2) ? Locale.ENGLISH : Locale.FRENCH));
-						return;						
+						return;
 					}
 					else {
 						hvc.setLanguage(language);
