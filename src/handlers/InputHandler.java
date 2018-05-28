@@ -198,7 +198,8 @@ public class InputHandler {
 				}
 				else {
 					long volume = (long) (((double)balance.getAccountValue()) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {volume/(60*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);					
+					volume = volume/100;
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {volume/60, volume%60, (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);					
 				}
 			}
 		}
@@ -283,7 +284,8 @@ public class InputHandler {
 			}
 		}
 		else if(result == 1) {
-			endStep(dao, ussd, modele, productProperties, i18n.getMessage("bonus.choice.done", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
+			// endStep(dao, ussd, modele, productProperties, i18n.getMessage("bonus.choice.done", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
+			endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.internal.error", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 		}
 		else {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.internal.error", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);

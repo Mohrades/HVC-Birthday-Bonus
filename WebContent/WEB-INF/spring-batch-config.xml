@@ -17,9 +17,9 @@
 	<!-- By default when specifying @Async on a method, the executor that will be used is the one supplied to the 'annotation-driven' -->
 	<!-- the value attribute of the @Async annotation can be used when needing to indicate that an executor other than the default should be used -->
 	<!-- set up a default executor -->
-	<task:executor id="batchTaskExecutor" pool-size="10" queue-capacity="20" rejection-policy="CALLER_RUNS" keep-alive="3600" />
+	<task:executor id="batchTaskExecutor" pool-size="10" queue-capacity="10" rejection-policy="CALLER_RUNS" keep-alive="3600" />
 	<!-- <task:executor id="executorWithPoolSizeRange" pool-size="5-25" queue-capacity="100" rejection-policy="DISCARD" keep-alive="3600" /> -->
-	<task:scheduler id="scheduling" pool-size="10" />
+	<task:scheduler id="scheduling" pool-size="07" />
 
 	<task:scheduled-tasks scheduler="scheduling">
 		<!-- new CronTrigger("* 15 9-17 * * MON-FRI") -->

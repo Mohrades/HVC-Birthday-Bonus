@@ -50,6 +50,24 @@ public class HVCDAOJdbc {
 
 		return 0;
 	}
+	
+	public int locking(HVC hvc, boolean locked) {
+		try {
+			if(locked) {
+				return getJdbcTemplate().update("UPDATE HVC_BIRTHDAY_BONUS_MSISDN_EBA SET LOCKED = 1 WHERE ((ID = " + hvc.getId() + ") AND (BONUS IS NULL) AND (LOCKED = 0))");
+			}
+			else {
+				return getJdbcTemplate().update("UPDATE HVC_BIRTHDAY_BONUS_MSISDN_EBA SET LOCKED = 0 WHERE (ID = " + hvc.getId() + ")");
+			}
+
+		} catch(EmptyResultDataAccessException emptyEx) {
+
+		} catch(Throwable th) {
+
+		}
+
+		return 0;
+	}
 
 	public HVC getOneHVC(int id) {
 		List<HVC> hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ID = " + id, new HVCRowMapper());

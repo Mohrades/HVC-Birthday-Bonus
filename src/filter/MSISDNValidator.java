@@ -129,7 +129,8 @@ public class MSISDNValidator {
 		if((country_code.length() + productProperties.getMsisdn_length()) == (msisdn.length())) {
 			for(String prefix : productProperties.getMnc()) {
 				if(msisdn.startsWith(country_code+prefix)) {
-					return true;
+					return (new AIRRequest().getAccountDetails(msisdn)) != null;
+					// return true;
 				}
 			}
 		}
