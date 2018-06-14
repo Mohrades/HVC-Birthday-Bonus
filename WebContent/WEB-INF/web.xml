@@ -8,16 +8,65 @@
 		/WEB-INF/*Context*.xml
 	</param-value>
   </context-param>
+
+  <!-- If using a Servlet 3 compatible servlet container, Log4j 2 will automatically be set up on startup by using a ServletContainerInitializer provided by the log4j-web artifact. If you would like to dynamically specify the configuration file to be used, you have to first deactivate the initializer by adding this to your web.xml: -->
+  <context-param>
+  	<param-name>isLog4jAutoInitializationDisabled</param-name>
+  	<param-value>true</param-value>
+  </context-param>
+
+  <!-- comment to use the servlet Log4j Initialization Servlet instead  -->
+  <!-- <context-param>
+  	<param-name>log4j-config-location</param-name>
+   	<param-value>WEB-INF/classes/log4j2.xml</param-value>
+  </context-param>
+  <context-param>
+   	<param-name>log4j-output-log</param-name>
+   	<param-value>WEB-INF/logs</param-value>
+  </context-param> -->
+
+  <!-- Using the context path of a web-app as log filename with Log4J -->
+  <!-- If you have a web application which you want to deploy more than once to a single servlet container you have the problem of separating your log files for the different web app instances. This is because the log configuration file is located in your WAR-file and it is not easy to change this file during the build process.
+  But there is a simple way of defining the log filename based on the context path of your web application. Simply set the contextPath as a system property in a ServletContextListener: -->
+  <!-- One last thing: Be aware that your servlet listener should be the first one in your web.xml so that no logging is done before the logger is correctly set up. -->
+  <!-- <listener>
+  	<listener-class>log4j.Log4j2Initializer</listener-class>
+  </listener> -->
+
+
   <listener>
     <listener-class>
 		org.springframework.web.context.ContextLoaderListener
 	</listener-class>
   </listener>
+
   <listener>
     <listener-class>
 		org.springframework.web.context.request.RequestContextListener
 	</listener-class>
   </listener>
+
+  <servlet>
+    <servlet-name>Log4j Initialization Servlet</servlet-name>
+    <servlet-class>log4j.Log4jInitServlet</servlet-class>
+    <!-- <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class> -->
+    <!-- <init-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>/WEB-INF/log4j-servlet.xml</param-value>
+    </init-param> -->
+    <init-param>
+      <param-name>log4j-config-location</param-name>
+      <!-- <param-value>WEB-INF/classes/log4j.properties</param-value> -->
+      <param-value>WEB-INF/classes/log4j2.xml</param-value>
+    </init-param>
+    <init-param>
+      <param-name>log4j-output-log</param-name>
+      <param-value>logs</param-value>
+    </init-param>
+    <!-- Il est important de demander le chargement automatique de la servlet en donnant la valeur 1 à son tag <load-on-startup> -->
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
   <servlet>
     <servlet-name>api</servlet-name>
     <servlet-class>

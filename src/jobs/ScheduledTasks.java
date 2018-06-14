@@ -69,9 +69,12 @@ public class ScheduledTasks {
 			Map<String, JobParameter> map = new HashMap<String, JobParameter>();
 			map.put("date.lancement", new JobParameter(timestampFormat.format(new Date())));
 			JobParameters params = new JobParameters(map);
+
+			// Launches job
+			@SuppressWarnings("unused")
 			JobExecution jobExecution = jobLauncher.run(job, params);
 
-			jobExecution.getStatus();
+			// jobExecution.getStatus();
 
 		} catch(Throwable th) {
 

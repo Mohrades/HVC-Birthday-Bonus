@@ -5,8 +5,14 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
@@ -18,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import connexions.AIRRequest;
 import dao.DAO;
+import dao.queries.BIRTHDAY_REPORT_TO_DATE_DAOJdbc;
 import dao.queries.HVCDAOJdbc;
 import dao.queries.USSDServiceDAOJdbc;
 import domain.models.HVC;
@@ -42,9 +49,22 @@ public class ImportHVCsTasklet implements Tasklet {
 			USSDService service = new USSDServiceDAOJdbc(dao).getOneUSSDService(productProperties.getSc());
 			Date now = new Date();
 
-			// service.unavailable
+			/*The first way to stop execution is to throw an exception. This works all the time, unless you configured the job to skip some exceptions in a chunk-oriented step!*/
+			// Stopping a job from a tasklet : Setting the stop flag in a tasklet is straightforward;
 			if((service == null) || (((service.getStart_date() != null) && (now.before(service.getStart_date()))) || ((service.getStop_date() != null) && (now.after(service.getStop_date()))))) {
-
+				// Sets stop flag
+				chunkContext.getStepContext().getStepExecution().setTerminateOnly();
+				stepContribution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
+			}
+			/*else if((productProperties.getBirth_dates_excluded() != null) && productProperties.getBirth_dates_excluded().contains(((new SimpleDateFormat("dd-MMM")).format(new Date())).toUpperCase())) {
+				// Sets stop flag
+				chunkContext.getStepContext().getStepExecution().setTerminateOnly();
+				stepContribution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
+			}*/
+			else if((new BIRTHDAY_REPORT_TO_DATE_DAOJdbc(dao)).isBirthDayReported()) {
+				// Sets stop flag
+				chunkContext.getStepContext().getStepExecution().setTerminateOnly();
+				stepContribution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
 			}
 			else {
 				// set today HVC
@@ -69,7 +89,34 @@ public class ImportHVCsTasklet implements Tasklet {
 					// Anciens propriétaires d'un MSISDN
 					// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,BIRTHDATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM')= TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME < ANY (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
 					// La mise à jour la plus récente !!
-					ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM')= TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
+					List<Map<String, Object>>  reporteds = (new BIRTHDAY_REPORT_TO_DATE_DAOJdbc(dao)).getAllReportedBirthDays();
+
+					if(reporteds.isEmpty()) {
+						ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM') = TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
+					}
+					else {
+						SimpleDateFormat dateFormat = new SimpleDateFormat("ddMM");
+						String birthdays = "'" + dateFormat.format(new Date()) + "'";
+
+						for(Map<String, Object> reported : reporteds) {
+							Set <Entry<String, Object> > entrees = reported.entrySet () ; // entrees est un ensemble de "paires"
+							Iterator <Entry<String, Object> > iter = entrees.iterator() ; // itérateur sur les paires
+							// boucle sur les paires
+							while (iter.hasNext()) {
+								Map.Entry <String, Object> entree = (Entry<String, Object>)iter.next() ;  // paire courante
+
+								String cle   = entree.getKey () ; // clé de la paire courante
+								if(cle.equals("BIRTH_DATE")) {
+									if(entree.getValue() != null) {
+										Date valeur = (Date) entree.getValue() ; // valeur de la paire courante
+										birthdays += ", '" + dateFormat.format(valeur) + "'";
+									}
+								}
+							}
+						}
+
+						ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM') IN (" + birthdays + ")) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
+					}
 
 					rs = ps.executeQuery();
 					// Liste des elements
@@ -77,7 +124,8 @@ public class ImportHVCsTasklet implements Tasklet {
 						String msisdn = rs.getString("MSISDN").trim();
 						String PREFERREDLANGUAGE = rs.getString("PREFERREDLANGUAGE").trim();
 						int language = PREFERREDLANGUAGE.equalsIgnoreCase("fr") ? 1 : PREFERREDLANGUAGE.equalsIgnoreCase("en") ? 2 : 1; // PREFERREDLANGUAGE = fr,en
-						allMSISDN_Today_Is_BIRTHDATE.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, rs.getString("FIRSTNAME").trim() + " " + rs.getString("LASTNAME").trim(), 0, language, rs.getDate("BIRTH_DATE")));
+						String identity = (((rs.getString("FIRSTNAME") == null) ? "" : rs.getString("FIRSTNAME").trim()) + " " + ((rs.getString("LASTNAME") == null) ? "" : rs.getString("LASTNAME").trim())).trim();
+						allMSISDN_Today_Is_BIRTHDATE.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, identity.isEmpty() ? msisdn : identity, 0, language, rs.getDate("BIRTH_DATE")));
 					}
 
 					connexion.commit(); // commit transaction
@@ -146,7 +194,7 @@ public class ImportHVCsTasklet implements Tasklet {
 
 				for(HVC hvc : allMSISDN_Today_Is_BIRTHDATE) {
 					try {
-						AccountDetails accountDetails = new AIRRequest().getAccountDetails(hvc.getValue());
+						AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(hvc.getValue());
 						if(accountDetails != null) hvc.setLanguage(accountDetails.getLanguageIDCurrent());
 						// store hvc
 						new HVCDAOJdbc(dao).saveOneHVC(hvc);
@@ -154,11 +202,11 @@ public class ImportHVCsTasklet implements Tasklet {
 					} catch(Throwable th) {
 
 					}
-				}				
-			}
+				}
 
-			stepContribution.setExitStatus(ExitStatus.COMPLETED);
-			return RepeatStatus.FINISHED;
+				stepContribution.setExitStatus(ExitStatus.COMPLETED);
+				return RepeatStatus.FINISHED;
+			}
 
 		} catch(Throwable th) {
 

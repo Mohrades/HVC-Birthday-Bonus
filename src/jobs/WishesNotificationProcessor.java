@@ -1,11 +1,8 @@
 package jobs;
 
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.stereotype.Component;
-
 import domain.models.HVC;
 
-@Component("wishesNotificationProcessor")
 public class WishesNotificationProcessor implements ItemProcessor<HVC, HVC> {
 
 	@Override

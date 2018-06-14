@@ -10,6 +10,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.MessageSource;
 
 import com.google.common.base.Splitter;
@@ -22,6 +25,7 @@ import dao.queries.USSDServiceDAOJdbc;
 import domain.models.HVC;
 import domain.models.USSDRequest;
 import domain.models.USSDService;
+import exceptions.AirAvailabilityException;
 import filter.MSISDNValidator;
 import product.ProductActions;
 import product.ProductProperties;
@@ -42,7 +46,7 @@ public class InputHandler {
 		USSDRequest ussd = null;
 		HVC hvc = null;
 
-		AccountDetails accountDetails = new AIRRequest().getAccountDetails(parameters.get("msisdn"));
+		AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(parameters.get("msisdn"));
 		int language = (accountDetails == null) ? 1 : accountDetails.getLanguageIDCurrent();
 
 		try {
@@ -161,6 +165,9 @@ public class InputHandler {
 		} catch(NullPointerException ex) {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.internal.error", null, null, Locale.FRENCH), null, null, null, null);
 
+		} catch(AirAvailabilityException ex) {
+			endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.internal.error", null, null, Locale.FRENCH), null, null, null, null);
+
 		} catch(Throwable th) {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.internal.error", null, null, Locale.FRENCH), null, null, null, null);
 		}
@@ -175,13 +182,13 @@ public class InputHandler {
 		}
 
 		int offer = Integer.parseInt(productProperties.getOffer_id().get(hvc.getSegment() - 1));
-		HashSet<OfferInformation> offers = new AIRRequest().getOffers(ussd.getMsisdn(), new int[][]{{offer,offer}}, false, null, false);
+		HashSet<OfferInformation> offers = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getOffers(ussd.getMsisdn(), new int[][]{{offer,offer}}, false, null, false);
 
 		if((offers == null) || offers.size() == 0) {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 		}
 		else {
-			BalanceAndDate balance = (hvc.getBonus() == 2) ? new AIRRequest().getBalanceAndDate(ussd.getMsisdn(), productProperties.getData_da()) : (hvc.getBonus() == 1) ? new AIRRequest().getBalanceAndDate(ussd.getMsisdn(), productProperties.getVoice_da()) : null;
+			BalanceAndDate balance = (hvc.getBonus() == 2) ? (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getBalanceAndDate(ussd.getMsisdn(), productProperties.getData_da()) : (hvc.getBonus() == 1) ? (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getBalanceAndDate(ussd.getMsisdn(), productProperties.getVoice_da()) : null;
 
 			if(balance == null) {
 				endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
@@ -214,13 +221,17 @@ public class InputHandler {
 		modele.put("message", messageA);
 
 		if(senderName != null) {
+			Logger logger = LogManager.getLogger("logging.log4j.SubmitSMLogger");
+
 			if(Anumber != null) {
-				if(Anumber.startsWith(productProperties.getMcc() + "")) Anumber = Anumber.substring((productProperties.getMcc() + "").length());
+				// if(Anumber.startsWith(productProperties.getMcc() + "")) Anumber = Anumber.substring((productProperties.getMcc() + "").length());
 				new SMPPConnector().submitSm(senderName, Anumber, messageA);
+				logger.trace("[" + Anumber + "] " + messageA);
 			}
 			if(Bnumber != null) {
-				if(Bnumber.startsWith(productProperties.getMcc() + "")) Bnumber = Bnumber.substring((productProperties.getMcc() + "").length());
+				// if(Bnumber.startsWith(productProperties.getMcc() + "")) Bnumber = Bnumber.substring((productProperties.getMcc() + "").length());
 				new SMPPConnector().submitSm(senderName, Bnumber, messageB);
+				logger.log(Level.TRACE, "[" + Bnumber + "] " + messageB);
 			}
 		}
 	}
@@ -241,7 +252,7 @@ public class InputHandler {
 	}
 
 	@SuppressWarnings("deprecation")
-	public void setBonus(DAO dao, HVC hvc, USSDRequest ussd, MessageSource i18n, ProductProperties productProperties, Map<String, Object> modele, List<String> inputs) {
+	public void setBonus(DAO dao, HVC hvc, USSDRequest ussd, MessageSource i18n, ProductProperties productProperties, Map<String, Object> modele, List<String> inputs) throws AirAvailabilityException {
 		/*HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), 0);*/
 
 		int choice = Integer.parseInt(inputs.get(1));
@@ -261,7 +272,7 @@ public class InputHandler {
 			volume = Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1));
 		}
 
-		int result = (new ProductActions()).doActions(dao, hvc, offer, da, volume);
+		int result = (new ProductActions(productProperties)).doActions(dao, hvc, offer, da, volume, productProperties.getAccumulator_id());
 
 		if(result == 0) {
 			Date expires = new Date();
@@ -272,15 +283,15 @@ public class InputHandler {
 				volume = (long) (((double)volume) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
 
 				if(volume >= 1024) {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.data.bonus", new Object [] {new Formatter().format("%.2f", ((double)volume)/1024), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), ussd.getMsisdn(), null, null, "HVC");
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.data.bonus", new Object [] {new Formatter().format("%.2f", ((double)volume)/1024), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), ussd.getMsisdn(), null, null, productProperties.getSms_notifications_header());
 				}
 				else {
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.data.bonus", new Object [] {volume, "Mo", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), ussd.getMsisdn(), null, null, "HVC");
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.data.bonus", new Object [] {volume, "Mo", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), ussd.getMsisdn(), null, null, productProperties.getSms_notifications_header());
 				}
 			}
 			else {
 				volume = (long) (((double)volume) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
-				endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.voice.bonus", new Object [] {volume/(60*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), ussd.getMsisdn(), null, null, "HVC");
+				endStep(dao, ussd, modele, productProperties, i18n.getMessage("sms.voice.bonus", new Object [] {volume/(60*100), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(expires)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), ussd.getMsisdn(), null, null, productProperties.getSms_notifications_header());
 			}
 		}
 		else if(result == 1) {

@@ -17,9 +17,11 @@
 	<!-- By default when specifying @Async on a method, the executor that will be used is the one supplied to the 'annotation-driven' -->
 	<!-- the value attribute of the @Async annotation can be used when needing to indicate that an executor other than the default should be used -->
 	<!-- set up a default executor -->
-	<task:executor id="batchTaskExecutor" pool-size="10" queue-capacity="10" rejection-policy="CALLER_RUNS" keep-alive="3600" />
+	<!-- <task:executor id="batchTaskExecutor" pool-size="07" queue-capacity="10" rejection-policy="CALLER_RUNS" keep-alive="3600" /> -->
+	<!-- <task:executor id="batchTaskExecutor" pool-size="05" queue-capacity="05" rejection-policy="CALLER_RUNS" keep-alive="1800" /> -->
+	<task:executor id="batchTaskExecutor" pool-size="03" queue-capacity="05" rejection-policy="CALLER_RUNS" keep-alive="1800" />
 	<!-- <task:executor id="executorWithPoolSizeRange" pool-size="5-25" queue-capacity="100" rejection-policy="DISCARD" keep-alive="3600" /> -->
-	<task:scheduler id="scheduling" pool-size="07" />
+	<task:scheduler id="scheduling" pool-size="05" />
 
 	<task:scheduled-tasks scheduler="scheduling">
 		<!-- new CronTrigger("* 15 9-17 * * MON-FRI") -->
@@ -27,19 +29,23 @@
 
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
   		<task:scheduled ref="jobs" method="import_hcvs" cron="0 00 04 ? * *" />
-  		<!-- <task:scheduled ref="jobs" method="import_hcvs" cron="30 08 18 ? * *" /> -->
 
 		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
 
   		<task:scheduled ref="jobs" method="clear_ussd" fixed-delay="900000" />
 
   		<!-- <task:scheduled ref="jobs" method="clear_sharing" cron="0 00 0 1 APR,MAY,JUN ?"  /> -->
-  		<task:scheduled ref="jobs" method="setDefaultBonus" cron="0 00 12 ? * *" />
+  		<task:scheduled ref="jobs" method="setDefaultBonus" cron="00 00 12 ? * *" />
 	</task:scheduled-tasks>
 
     <bean id="transactionManager" class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
     <bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean" p:transactionManager-ref="transactionManager" />
     <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher" p:jobRepository-ref="jobRepository" p:taskExecutor-ref="batchTaskExecutor" />
+ 	<!-- <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher" p:jobRepository-ref="jobRepository">
+	  	<property name="taskExecutor">
+	    	<bean class="org.springframework.core.task.SimpleAsyncTaskExecutor" />
+	  	</property>
+  	</bean> -->
 
 	<batch:job id="cleanExpiredUssdRequestJob">
 	  <batch:step id="cleanUssdRequest">
@@ -49,58 +55,175 @@
 
 	<batch:job id="importHVCJob">
 	  <batch:step id="importHVCs">
-	  	<batch:tasklet ref="importHVCsTasklet" transaction-manager="transactionManager" />
+	  	<batch:tasklet ref="importHVCsTasklet" transaction-manager="transactionManager">
+		  <!-- Intercepting Step Execution -->
+		  <!-- Just as with the Job, there are many events during the execution of a Step where a user may need to perform some functionality.
+		  This can be accomplished with one of many Step scoped listeners. -->
+    	  <batch:listeners>
+    	    <batch:listener ref="jobRunListener" />
+    	  </batch:listeners>
+	    </batch:tasklet>
 	  </batch:step>
 	</batch:job>
 
+	<!-- To disable restart, set the attribute restartable to false on the job element:
+	Remember that jobs are restartable by default. If you’re worried that you’ll forget that, set the restartable flag explicitly on all your jobs. -->
 	<batch:job id="happyBirthdayWishesJob">
 	  <batch:step id="wishesNotificationThroughSms">
 	  	<batch:tasklet>
-	      <batch:chunk
-	        reader="allHVCsReader" processor="wishesNotificationProcessor" writer="wishesNotificationWriter" commit-interval="100">
+	      <batch:chunk commit-interval="100">
+	        <batch:reader>
+		  		<!-- reader must be evaluated for every scheduled execution of the given job. -->
+		  		<!-- If you set the scope of the bean to step, then a new bean will be created every time the step is executed. -->
+				<bean class="jobs.HVCsReader" scope="step">
+					<constructor-arg index="0" type="int" value="0" />
+			   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
+
+				  	<property name="dataSource" ref="db_connection" />
+				  	<property name="rowMapper">
+				    	<bean class="dao.mapping.HVCRowMapper" />
+				  	</property>
+				  	<!-- <property name="sql">
+				  		<value>
+				    		SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA
+				  		</value>
+					</property> -->
+				</bean>
+	        </batch:reader>
+
+	        <batch:processor>
+	          <bean class="jobs.WishesNotificationProcessor" />
+	        </batch:processor>
+
+	        <batch:writer>
+	          <bean class="jobs.WishesNotificationWriter">
+	          	<property name="i18n" ref="messageSource" />
+	          	<property name="productProperties" ref="productProperties" />
+	          </bean>
+	        </batch:writer>
 	      </batch:chunk>
+
+		  <!-- Intercepting Step Execution -->
+		  <!-- Just as with the Job, there are many events during the execution of a Step where a user may need to perform some functionality.
+		  This can be accomplished with one of many Step scoped listeners. -->
+    	  <batch:listeners>
+    	    <batch:listener ref="jobRunListener" />
+    	  </batch:listeners>
 	    </batch:tasklet>
 	  </batch:step>
 	</batch:job>
 
+	<!-- To disable restart, set the attribute restartable to false on the job element:
+	Remember that jobs are restartable by default. If you’re worried that you’ll forget that, set the restartable flag explicitly on all your jobs. -->
 	<batch:job id="defaultBonusJob">
+	  <batch:listeners>
+      	<batch:listener>
+          <bean class="jobs.listeners.DefaultBonusJobListener" />
+        </batch:listener>
+  	  </batch:listeners>
+
+	  <!-- A single step cannot have both a "next" attribute and a transition element. -->
+	  <!-- <batch:step id="stepA" next="stepB" /> -->
 	  <batch:step id="defaultBonus">
-	  	<batch:tasklet>
+	  	<batch:tasklet task-executor="MultithreadedStepsTaskExecutor" throttle-limit="3">
 	      <batch:chunk
-	        reader="allHVCsWithNoBonusReader" processor="defaultBonusProcessor" writer="defaultBonusWriter" commit-interval="1">
+	        reader="allHVCsWithNoBonusReader" processor="defaultBonusProcessor" writer="defaultBonusWriter" commit-interval="10" skip-limit="10" retry-limit="3">
+
+			<!-- Each stream element involved in the step.
+			By default, objects referenced using a reader, processor, and writer are automatically registered. You don’t need to specify them again here. -->
+	        <!-- <batch:streams>
+	          <batch:stream ref="allHVCsWithNoBonusReader" />
+	          <batch:stream ref="defaultBonusWriter" />
+	        </batch:streams> -->
+
+			<!-- The Step allows a limit for the number of times an exception can be skipped, and a list of exceptions that are 'skippable'. -->
+         	<batch:skippable-exception-classes>
+            	<batch:include class="exceptions.AirAvailabilityException" />
+
+            	<!-- <batch:include class="org.springframework.batch.item.file.FlatFileParseException" />
+            	<batch:exclude class="java.lang.Exception" />
+            	<batch:exclude class="java.io.FileNotFoundException" /> -->
+         	</batch:skippable-exception-classes>
+
+			<!-- The Step allows a limit for the number of times an individual item can be retried, and a list of exceptions that are 'retryable'. -->
+	        <batch:retryable-exception-classes>
+	          	<batch:include class="org.springframework.dao.DeadlockLoserDataAccessException"/>
+	        </batch:retryable-exception-classes>
 	      </batch:chunk>
+
+		  <!-- the Step can be configured with a list of exceptions that should not cause rollback. -->
+	      <batch:no-rollback-exception-classes>
+	         <batch:include class="java.lang.Throwable" />
+	      </batch:no-rollback-exception-classes>
+
+		  <!-- Intercepting Step Execution -->
+		  <!-- Just as with the Job, there are many events during the execution of a Step where a user may need to perform some functionality.
+		  This can be accomplished with one of many Step scoped listeners. -->
+    	  <batch:listeners>
+    	    <batch:listener ref="jobRunListener" />
+    	  </batch:listeners>
 	    </batch:tasklet>
+
+		<!-- Declares job should end at this point, without the possibility of restart. BatchStatus will be COMPLETED. ExitStatus is configurable. -->
+		<!-- The 'end' element instructs a Job to stop with a BatchStatus of COMPLETED. A Job that has finished with status COMPLETED cannot be restarted (the framework will throw a JobInstanceAlreadyCompleteException) -->
+		<!-- The 'end' element also allows for an optional 'exit-code' attribute that can be used to customize the ExitStatus of the Job. If no 'exit-code' attribute is given, then the ExitStatus will be "COMPLETED" by default, to match the BatchStatus. -->
+    	<!-- <batch:end on="FAILED" /> -->
+    	<!-- <batch:end on="COMPLETED WITH SKIPS" to="errorPrint1" /> -->
+
+		<!-- Declares job should fail at this point. BatchStatus will be FAILED. ExitStatus is configurable. -->
+		<!-- The 'fail' element instructs a Job to stop with a BatchStatus of FAILED. Unlike the 'end' element, the 'fail' element will not prevent the Job from being restarted.
+		The 'fail' element also allows for an optional 'exit-code' attribute that can be used to customize the ExitStatus of the Job. If no 'exit-code' attribute is given, then the ExitStatus will be "FAILED" by default, to match the BatchStatus. -->
+		<!-- <batch:fail on="FAILED" exit-code="EARLY TERMINATION" /> -->
+
+		<!-- Declares job should be stop at this point and provides pointer where execution should continue when the job is restarted. -->
+		<!-- The 'stop' element instructs a Job to stop with a BatchStatus of STOPPED. Stopping a Job can provide a temporary break in processing so that the operator can take some action before restarting the Job. -->
+		<!-- The 'stop' element requires a 'restart' attribute that specifies the step where execution should pick up when the Job is restarted. -->
+		<!-- <batch:stop on="COMPLETED" restart="step2" /> -->
+
+		<!-- If transition elements are used, then all of the behavior for the Step's transitions must be defined explicitly. While there is no limit to the number of transition elements on a Step, if the Step's execution results in an ExitStatus that is not covered by an element, then the framework will throw an exception and the Job will fail. The framework will automatically order transitions from most specific to least specific. -->
+		<!-- Defines a transition from this step to the next one depending on the value of the exit status. ExitStatus represents the status of a Step after it finishes execution. More specifically, the 'next' element above references the exit code of the ExitStatus -->
+    	<!-- <batch:next on="COMPLETED WITH SKIPS" to="errorPrint1" /> -->
+    	<!-- <batch:next on="*" to="step2" /> -->
 	  </batch:step>
 	</batch:job>
 
-	<bean id="allHVCsReader" class="jobs.HVCsReader">
-		<constructor-arg index="0" type="int" value="0" />
-   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
+    <bean id="jobRunListener" class="jobs.listeners.JobRunListener">
+      <property name="dao" ref="dao" />
+      <property name="productProperties" ref="productProperties" />
+    </bean>
 
-	  	<property name="dataSource" ref="db_connection" />
-	  	<property name="rowMapper">
-	    	<bean class="dao.mapping.HVCRowMapper" />
+	<!-- Configuring a thread-safe JdbcCursorItemReader with an indicator -->
+	<!-- You start by configuring a SynchronizingItemReader bean to make the delegate item reader thread-safe. The synchronized item reader uses the delegate property to reference the delegate item reader.
+	You then use the processed indicator column in the SQL statement to read data. A processed value of false causes the database to return only unprocessed rows.
+	Finally, you  disable Spring Batch state management. This is the other requirement to make the item reader thread-safe (with the synchronization of the read method).
+	But by doing that, you lose the reader’s restartability feature, because the item reader won’t know where it left off after a failure.
+	Luckily, the process indicator is there to enable restartability: the reader reads only unprocessed items. The item writer then needs to flag the product as handled using the processed column and then write the item, as described in the following listing. -->
+	<bean id="allHVCsWithNoBonusReader" class="jobs.SynchronizingItemReader">
+	  	<property name="delegate">
+	  		<!-- reader must be evaluated for every scheduled execution of the given job. -->
+	  		<!-- If you set the scope of the bean to step, then a new bean will be created every time the step is executed. -->
+			<bean class="jobs.HVCsReader" scope="step">
+				<constructor-arg index="0" type="int" value="2" />
+		   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
+
+			  	<property name="dataSource" ref="db_connection" />
+			  	<property name="saveState" value="false" />
+			  	<property name="rowMapper">
+			    	<bean class="dao.mapping.HVCRowMapper" />
+			  	</property>
+			  	<!-- <property name="sql">
+			  		<value>
+			    		SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE BONUS = NULL
+			  		</value>
+				</property> -->
+			</bean>
 	  	</property>
-	  	<!-- <property name="sql">
-	  		<value>
-	    		SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA
-	  		</value>
-		</property> -->
 	</bean>
 
-	<bean id="allHVCsWithNoBonusReader" class="jobs.HVCsReader">
-		<constructor-arg index="0" type="int" value="2" />
-   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
-
-	  	<property name="dataSource" ref="db_connection" />
-	  	<property name="rowMapper">
-	    	<bean class="dao.mapping.HVCRowMapper" />
-	  	</property>
-	  	<!-- <property name="sql">
-	  		<value>
-	    		SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE BONUS = NULL
-	  		</value>
-		</property> -->
+	<bean id="MultithreadedStepsTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+	  <property name="corePoolSize" value="03" />
+	  <property name="maxPoolSize" value="03" />
+	  <property name="queueCapacity" value="10" />
 	</bean>
 
 </beans>

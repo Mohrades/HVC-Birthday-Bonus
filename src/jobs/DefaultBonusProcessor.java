@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import dao.DAO;
 import domain.models.HVC;
+import exceptions.AirAvailabilityException;
 import product.ProductActions;
 import product.ProductProperties;
 
@@ -19,7 +20,7 @@ public class DefaultBonusProcessor implements ItemProcessor<HVC, HVC> {
 	private ProductProperties productProperties;
 
 	@Override
-	public HVC process(HVC hvc) {
+	public HVC process(HVC hvc) throws AirAvailabilityException {
 		// TODO Auto-generated method stub
 
 		try {
@@ -30,7 +31,7 @@ public class DefaultBonusProcessor implements ItemProcessor<HVC, HVC> {
 			// set bonus choice (data or voice) : in this case equals voice
 			hvc.setBonus(1);
 
-			if((new ProductActions()).doActions(dao, hvc, offer, da, voice_volume) == 0) {
+			if((new ProductActions(productProperties)).doActions(dao, hvc, offer, da, voice_volume, productProperties.getAccumulator_id()) == 0) {
 				return hvc;
 			}
 
@@ -67,6 +68,9 @@ public class DefaultBonusProcessor implements ItemProcessor<HVC, HVC> {
 				}
 			}*/
 
+		} catch(AirAvailabilityException ex) {
+			throw ex;
+			
 		} catch(Throwable th) {
 			
 		}

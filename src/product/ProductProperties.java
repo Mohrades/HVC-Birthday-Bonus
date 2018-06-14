@@ -35,10 +35,15 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 	@Value("#{appConfig['data.da']}")
 	private int data_da;
 
+	@Value("#{appConfig['accumulator.id']}")
+	private int accumulator_id;
+
 	private List<String> customer_segment_list;
 
 	@Value("#{appConfig['customer.segment.filter']}")
 	private String customer_segment_filter;
+
+	/*private List<String> birth_dates_excluded;*/
 
 	private List<String> offer_id;
 
@@ -57,12 +62,27 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 	private List<String> Bnumber_serviceClass_exclude_filter;
 	private List<String> Bnumber_db_exclude_filter;
 
+	private List<String> air_hosts;
+	@Value("#{appConfig['air.io.sleep']}")
+	private int air_io_sleep;
+	@Value("#{appConfig['air.io.timeout']}")
+	private int air_io_timeout;
+	@Value("#{appConfig['air.io.threshold']}")
+	private int air_io_threshold;
+
 	@Value("#{appConfig['gsm.mnc']}")
 	public void setMnc(final String gsmmnc) {
 		if(isSet(gsmmnc)) {
 			mnc = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(gsmmnc);
 		}
 	 }
+
+	@Value("#{appConfig['air.hosts']}")
+	public void setAir_hosts(final String air_hosts) {
+		if(isSet(air_hosts)) {
+			this.air_hosts = Splitter.onPattern("[;]").trimResults().omitEmptyStrings().splitToList(air_hosts);
+		}
+	}
 
 	@Value("#{appConfig['customer.segment.list']}")
 	public void setCustomer_segment_list(final String customer_segment_list) {
@@ -162,6 +182,13 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		}
 	}
 
+	/*@Value("#{appConfig['birth.dates.excluded']}")
+	public void setBirth_dates_excluded(final String birth_dates_excluded) {
+		if(isSet(birth_dates_excluded)) {
+			this.birth_dates_excluded = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(birth_dates_excluded);
+		}
+	}*/
+
 	public short getMcc() {
 		return mcc;
 	}
@@ -192,6 +219,10 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 
 	public String getCustomer_segment_filter() {
 		return customer_segment_filter;
+	}
+
+	public int getAccumulator_id() {
+		return accumulator_id;
 	}
 
 	public int getVoice_da() {
@@ -252,6 +283,26 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 
 	public List<String> getBnumber_db_exclude_filter() {
 		return Bnumber_db_exclude_filter;
+	}
+
+	/*public List<String> getBirth_dates_excluded() {
+		return birth_dates_excluded;
+	}*/
+
+	public List<String> getAir_hosts() {
+		return air_hosts;
+	}
+
+	public int getAir_io_sleep() {
+		return air_io_sleep;
+	}
+
+	public int getAir_io_timeout() {
+		return air_io_timeout;
+	}
+
+	public int getAir_io_threshold() {
+		return air_io_threshold;
 	}
 
 	public boolean isSet(String property_value) {
