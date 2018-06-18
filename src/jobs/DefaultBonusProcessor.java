@@ -1,23 +1,37 @@
 package jobs;
 
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import dao.DAO;
 import domain.models.HVC;
 import exceptions.AirAvailabilityException;
 import product.ProductActions;
 import product.ProductProperties;
 
-@Component("defaultBonusProcessor")
 public class DefaultBonusProcessor implements ItemProcessor<HVC, HVC> {
 
-	@Autowired
 	private DAO dao;
 
-	@Autowired
 	private ProductProperties productProperties;
+
+	public DefaultBonusProcessor() {
+		
+	}
+
+	public DAO getDao() {
+		return dao;
+	}
+
+	public void setDao(DAO dao) {
+		this.dao = dao;
+	}
+
+	public ProductProperties getProductProperties() {
+		return productProperties;
+	}
+
+	public void setProductProperties(ProductProperties productProperties) {
+		this.productProperties = productProperties;
+	}
 
 	@Override
 	public HVC process(HVC hvc) throws AirAvailabilityException {

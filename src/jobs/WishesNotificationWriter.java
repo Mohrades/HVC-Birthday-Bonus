@@ -49,12 +49,13 @@ public class WishesNotificationWriter implements ItemWriter<HVC> {
 			for(HVC hvc : hvcs) {
 				if(hvc != null) {
 					try {
-						AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(hvc.getValue());
+						AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getAccountDetails(hvc.getValue());
 						hvc.setLanguage((accountDetails == null) ? 1 : accountDetails.getLanguageIDCurrent());
+						String message = i18n.getMessage("sms_birthday", new Object [] {hvc.getName()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH);
 
-						/*new SMPPConnector().submitSm("HVC", hvc.getValue(), i18n.getMessage("sms_birthday", new Object [] {hvc.getName()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));*/
-						new SMPPConnector().submitSm(productProperties.getSms_notifications_header(), hvc.getValue(), i18n.getMessage("sms_birthday", new Object [] {hvc.getName()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
-						logger.log(Level.TRACE, "[" + hvc.getValue() + "] " + i18n.getMessage("sms_birthday", new Object [] {hvc.getName()}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
+						/*new SMPPConnector().submitSm("HVC", hvc.getValue(), message);*/
+						new SMPPConnector().submitSm(productProperties.getSms_notifications_header(), hvc.getValue(), message);
+						logger.log(Level.TRACE, "[" + hvc.getValue() + "] " + message);
 
 					} catch(NullPointerException ex) {
 

@@ -7,27 +7,37 @@ import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
-import org.springframework.stereotype.Component;
-
 import connexions.AIRRequest;
 import domain.models.HVC;
 import product.ProductProperties;
 import tools.SMPPConnector;
 import util.AccountDetails;
 
-@Component("defaultBonusWriter")
 public class DefaultBonusWriter implements ItemWriter<HVC> {
 
-	@Autowired
 	private MessageSource i18n;
 
-	@Autowired
 	private ProductProperties productProperties;
 
 	public DefaultBonusWriter() {
 
+	}
+
+	public MessageSource getI18n() {
+		return i18n;
+	}
+
+	public void setI18n(MessageSource i18n) {
+		this.i18n = i18n;
+	}
+
+	public ProductProperties getProductProperties() {
+		return productProperties;
+	}
+
+	public void setProductProperties(ProductProperties productProperties) {
+		this.productProperties = productProperties;
 	}
 
 	@Override
@@ -41,12 +51,14 @@ public class DefaultBonusWriter implements ItemWriter<HVC> {
 			for(HVC hvc : hvcs) {
 				if(hvc != null) {
 					try {
-						AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(hvc.getValue());
+						AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getAccountDetails(hvc.getValue());
 						hvc.setLanguage((accountDetails == null) ? 1 : accountDetails.getLanguageIDCurrent());
 
 						long volume = (long) (((double)Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1))) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
-						new SMPPConnector().submitSm(productProperties.getSms_notifications_header(), hvc.getValue(), i18n.getMessage("sms.voice.bonus", new Object [] {volume/(60*100), dateFormat.format(hvc.getBonus_expires_in())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
-						logger.trace("[" + hvc.getValue() + "] " + i18n.getMessage("sms.voice.bonus", new Object [] {volume/(60*100), dateFormat.format(hvc.getBonus_expires_in())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
+						String message = i18n.getMessage("sms.voice.bonus", new Object [] {volume/(60*100), dateFormat.format(hvc.getBonus_expires_in())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH);
+
+						new SMPPConnector().submitSm(productProperties.getSms_notifications_header(), hvc.getValue(), message);
+						logger.trace("[" + hvc.getValue() + "] " + message);
 
 					} catch(NullPointerException ex) {
 

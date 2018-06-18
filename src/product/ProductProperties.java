@@ -69,6 +69,12 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 	private int air_io_timeout;
 	@Value("#{appConfig['air.io.threshold']}")
 	private int air_io_threshold;
+	@Value("#{appConfig['air.test.connection.msisdn']}")
+	private String air_test_connection_msisdn;
+	@Value("#{appConfig['air.preferred.host']}")
+	private byte air_preferred_host;
+
+	private List<String> happy_birthday_bonus_event_listeners;
 
 	@Value("#{appConfig['gsm.mnc']}")
 	public void setMnc(final String gsmmnc) {
@@ -76,6 +82,13 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 			mnc = Splitter.onPattern("[,]").trimResults().omitEmptyStrings().splitToList(gsmmnc);
 		}
 	 }
+
+	@Value("#{appConfig['happy.birthday.bonus.event.listeners']}")
+	public void setHappy_birthday_bonus_event_listeners(final String happy_birthday_bonus_event_listeners) {
+		if(isSet(happy_birthday_bonus_event_listeners)) {
+			this.happy_birthday_bonus_event_listeners = Splitter.onPattern("[<]").trimResults().omitEmptyStrings().splitToList(happy_birthday_bonus_event_listeners);
+		}
+	}
 
 	@Value("#{appConfig['air.hosts']}")
 	public void setAir_hosts(final String air_hosts) {
@@ -205,6 +218,10 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		return sms_notifications_header;
 	}
 
+	public List<String> getHappy_birthday_bonus_event_listeners() {
+		return happy_birthday_bonus_event_listeners;
+	}
+
 	public List<String> getMnc() {
 		return mnc;
 	}
@@ -303,6 +320,18 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 
 	public int getAir_io_threshold() {
 		return air_io_threshold;
+	}
+
+	public String getAir_test_connection_msisdn() {
+		return air_test_connection_msisdn;
+	}
+
+	public byte getAir_preferred_host() {
+		return air_preferred_host;
+	}
+
+	public void setAir_preferred_host(byte air_preferred_host) {
+		this.air_preferred_host = air_preferred_host;
 	}
 
 	public boolean isSet(String property_value) {

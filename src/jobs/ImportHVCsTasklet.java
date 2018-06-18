@@ -22,7 +22,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import connexions.AIRRequest;
 import dao.DAO;
 import dao.queries.BIRTHDAY_REPORT_TO_DATE_DAOJdbc;
 import dao.queries.HVCDAOJdbc;
@@ -30,7 +29,7 @@ import dao.queries.USSDServiceDAOJdbc;
 import domain.models.HVC;
 import domain.models.USSDService;
 import product.ProductProperties;
-import util.AccountDetails;
+import tools.HappyBirthdayEventPublisher;
 
 @Component("importHVCsTasklet")
 public class ImportHVCsTasklet implements Tasklet {
@@ -122,8 +121,20 @@ public class ImportHVCsTasklet implements Tasklet {
 					// Liste des elements
 					while (rs.next()) {
 						String msisdn = rs.getString("MSISDN").trim();
-						String PREFERREDLANGUAGE = rs.getString("PREFERREDLANGUAGE").trim();
-						int language = PREFERREDLANGUAGE.equalsIgnoreCase("fr") ? 1 : PREFERREDLANGUAGE.equalsIgnoreCase("en") ? 2 : 1; // PREFERREDLANGUAGE = fr,en
+						int language = 1;
+
+						try {
+							String PREFERREDLANGUAGE = rs.getString("PREFERREDLANGUAGE").trim();
+							language = PREFERREDLANGUAGE.equalsIgnoreCase("fr") ? 1 : PREFERREDLANGUAGE.equalsIgnoreCase("en") ? 2 : 1; // PREFERREDLANGUAGE = fr,en
+
+						} catch(NumberFormatException ex) {
+
+						} catch(Exception ex) {
+
+						} catch(Throwable th) {
+
+						}
+
 						String identity = (((rs.getString("FIRSTNAME") == null) ? "" : rs.getString("FIRSTNAME").trim()) + " " + ((rs.getString("LASTNAME") == null) ? "" : rs.getString("LASTNAME").trim())).trim();
 						allMSISDN_Today_Is_BIRTHDATE.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, identity.isEmpty() ? msisdn : identity, 0, language, rs.getDate("BIRTH_DATE")));
 					}
@@ -189,18 +200,42 @@ public class ImportHVCsTasklet implements Tasklet {
 					}
 				}
 
-				// croiser today_is_birthday and segment
+				// publishers
+				HashSet <HVC> allMSISDN_Today_Is_BIRTHDATE_COPY = null;
+				List<String> happy_birthday_bonus_event_listeners = productProperties.getHappy_birthday_bonus_event_listeners();
+				if(happy_birthday_bonus_event_listeners != null) {
+					allMSISDN_Today_Is_BIRTHDATE_COPY = new HashSet <HVC>(allMSISDN_Today_Is_BIRTHDATE);
+				}
+
+				// croiser today_is_birthday and HVC
 				allMSISDN_Today_Is_BIRTHDATE.retainAll(allHVC);
 
 				for(HVC hvc : allMSISDN_Today_Is_BIRTHDATE) {
 					try {
-						AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(hvc.getValue());
-						if(accountDetails != null) hvc.setLanguage(accountDetails.getLanguageIDCurrent());
+						// AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(hvc.getValue());
+						// if(accountDetails != null) hvc.setLanguage(accountDetails.getLanguageIDCurrent());
 						// store hvc
 						new HVCDAOJdbc(dao).saveOneHVC(hvc);
 
 					} catch(Throwable th) {
 
+					}
+				}
+
+				// publish msisdn as a birthday susbcriber
+				if(happy_birthday_bonus_event_listeners != null) {
+					// croiser today_is_birthday and not HVC
+					allMSISDN_Today_Is_BIRTHDATE_COPY.removeAll(allHVC);
+
+					for(HVC hvc : allMSISDN_Today_Is_BIRTHDATE_COPY) {
+						try {
+							for(String url : happy_birthday_bonus_event_listeners) {
+								if((new HappyBirthdayEventPublisher()).notify(url, hvc.getValue(), hvc.getName(), hvc.getLanguage(), "eBA") == 0) ;
+							}
+
+						} catch(Throwable th) {
+
+						}
 					}
 				}
 

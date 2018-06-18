@@ -45,11 +45,17 @@ public class InputHandler {
 	public void handle(MessageSource i18n, ProductProperties productProperties, Map<String, String> parameters, Map<String, Object> modele, HttpServletRequest request, DAO dao) {
 		USSDRequest ussd = null;
 		HVC hvc = null;
-
-		AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(parameters.get("msisdn"));
-		int language = (accountDetails == null) ? 1 : accountDetails.getLanguageIDCurrent();
+		int language = 1;
 
 		try {
+			if(productProperties.getAir_preferred_host() != -1) {
+				AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getAccountDetails(parameters.get("msisdn"));
+				language = (accountDetails == null) ? 1 : accountDetails.getLanguageIDCurrent();
+			}
+			else {
+				throw new AirAvailabilityException();
+			}
+
 			long sessionId = Long.parseLong(parameters.get("sessionid"));
 			ussd = new USSDRequestDAOJdbc(dao).getOneUSSD(sessionId, parameters.get("msisdn"));
 
@@ -182,13 +188,13 @@ public class InputHandler {
 		}
 
 		int offer = Integer.parseInt(productProperties.getOffer_id().get(hvc.getSegment() - 1));
-		HashSet<OfferInformation> offers = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getOffers(ussd.getMsisdn(), new int[][]{{offer,offer}}, false, null, false);
+		HashSet<OfferInformation> offers = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getOffers(ussd.getMsisdn(), new int[][]{{offer,offer}}, false, null, false);
 
 		if((offers == null) || offers.size() == 0) {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 		}
 		else {
-			BalanceAndDate balance = (hvc.getBonus() == 2) ? (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getBalanceAndDate(ussd.getMsisdn(), productProperties.getData_da()) : (hvc.getBonus() == 1) ? (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getBalanceAndDate(ussd.getMsisdn(), productProperties.getVoice_da()) : null;
+			BalanceAndDate balance = (hvc.getBonus() == 2) ? (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getBalanceAndDate(ussd.getMsisdn(), productProperties.getData_da()) : (hvc.getBonus() == 1) ? (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getBalanceAndDate(ussd.getMsisdn(), productProperties.getVoice_da()) : null;
 
 			if(balance == null) {
 				endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);

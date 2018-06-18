@@ -118,7 +118,7 @@
 	<batch:job id="defaultBonusJob">
 	  <batch:listeners>
       	<batch:listener>
-          <bean class="jobs.listeners.DefaultBonusJobListener" />
+          <bean class="jobs.listeners.DefaultBonusJobListener" scope="step" />
         </batch:listener>
   	  </batch:listeners>
 
@@ -126,8 +126,22 @@
 	  <!-- <batch:step id="stepA" next="stepB" /> -->
 	  <batch:step id="defaultBonus">
 	  	<batch:tasklet task-executor="MultithreadedStepsTaskExecutor" throttle-limit="3">
-	      <batch:chunk
-	        reader="allHVCsWithNoBonusReader" processor="defaultBonusProcessor" writer="defaultBonusWriter" commit-interval="10" skip-limit="10" retry-limit="3">
+	      <!-- <batch:chunk reader="allHVCsWithNoBonusReader" processor="defaultBonusProcessor" writer="defaultBonusWriter" commit-interval="10" skip-limit="10" retry-limit="3"> -->
+	      <batch:chunk reader="allHVCsWithNoBonusReader" commit-interval="10" skip-limit="10" retry-limit="3">
+
+	        <batch:processor>
+	          <bean class="jobs.DefaultBonusProcessor">
+	          	<property name="dao" ref="dao" />
+	          	<property name="productProperties" ref="productProperties" />
+	          </bean>
+	        </batch:processor>
+
+	        <batch:writer>
+	          <bean class="jobs.DefaultBonusWriter">
+	          	<property name="i18n" ref="messageSource" />
+	          	<property name="productProperties" ref="productProperties" />
+	          </bean>
+	        </batch:writer>
 
 			<!-- Each stream element involved in the step.
 			By default, objects referenced using a reader, processor, and writer are automatically registered. You don’t need to specify them again here. -->
@@ -187,7 +201,7 @@
 	  </batch:step>
 	</batch:job>
 
-    <bean id="jobRunListener" class="jobs.listeners.JobRunListener">
+    <bean id="jobRunListener" class="jobs.listeners.JobRunListener" scope="step">
       <property name="dao" ref="dao" />
       <property name="productProperties" ref="productProperties" />
     </bean>

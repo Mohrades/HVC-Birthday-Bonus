@@ -5,6 +5,10 @@ import domain.models.HVC;
 
 public class WishesNotificationProcessor implements ItemProcessor<HVC, HVC> {
 
+	public WishesNotificationProcessor() {
+		
+	}
+
 	@Override
 	public HVC process(HVC hvc) {
 		// TODO Auto-generated method stub

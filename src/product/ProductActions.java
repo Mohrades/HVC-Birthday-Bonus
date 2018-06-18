@@ -15,19 +15,20 @@ import util.BalanceAndDate;
 import util.DedicatedAccount;
 
 public class ProductActions {
-	ProductProperties productProperties;
-	
+
+	private ProductProperties productProperties;
+
 	public ProductActions(ProductProperties productProperties) {
 		this.productProperties = productProperties;
 	}
-	
+
 	@SuppressWarnings("deprecation")
 	public int doActions(DAO dao, HVC hvc, int offer, int da, long volume, int accumulator) throws AirAvailabilityException {
-		AIRRequest request = new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold());
+		AIRRequest request = new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host());
 
 		int responseCode = -1;
 
-		if((request.getBalanceAndDate(hvc.getValue(), 0)) != null) {
+		if((productProperties.getAir_preferred_host() != -1) && ((request.getBalanceAndDate(hvc.getValue(), 0)) != null)) {
 			try {
 				Date expires = new Date();
 				expires.setDate(expires.getDate() + 1);
@@ -39,13 +40,13 @@ public class ProductActions {
 					responseCode = 1;
 
 					HashSet<BalanceAndDate> balances = new HashSet<BalanceAndDate>();
-					if(da == 0) balances.add(new BalanceAndDate(da, volume, expires));
+					if(da == 0) balances.add(new BalanceAndDate(da, volume, null));
 					else balances.add(new DedicatedAccount(da, volume, expires));
 
 					// update Anumber Balance
 					if(request.updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA")) {
 						// update Anumber Offer
-						if(request.updateOffer(hvc.getValue(), offer, null, expires, null, "eBA")) {
+						if((offer == 0) || (request.updateOffer(hvc.getValue(), offer, null, expires, null, "eBA"))) {
 							// reset accumulator
 					        HashSet<AccumulatorInformation> accumulatorInformationList = new HashSet<AccumulatorInformation>();
 					        AccumulatorInformation accumulatorInformation = new AccumulatorInformation(accumulator, 0, null, null);
@@ -66,7 +67,7 @@ public class ProductActions {
 						else {
 							balances.clear();
 							if(da == 0) balances.add(new BalanceAndDate(da, -volume, null));
-							else balances.add(new DedicatedAccount(da, -volume, null));
+							else balances.add(new DedicatedAccount(da, -volume, expires));
 
 							if(request.updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA"));
 							else {
@@ -91,15 +92,21 @@ public class ProductActions {
 
 					if(request.isWaitingForResponse()) {
 						if(request.isSuccessfully());
-						else throw new AirAvailabilityException();
+						else {
+							productProperties.setAir_preferred_host((byte) (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).testConnection(productProperties.getAir_test_connection_msisdn(), productProperties.getAir_preferred_host()));
+							throw new AirAvailabilityException();
+						}
 					}
 				}
 			}
 		}
 		else {
-			if(request.isWaitingForResponse()) {
+			if((productProperties.getAir_preferred_host() != -1) && (request.isWaitingForResponse())) {
 				if(request.isSuccessfully());
-				else throw new AirAvailabilityException();				
+				else {
+					productProperties.setAir_preferred_host((byte) (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).testConnection(productProperties.getAir_test_connection_msisdn(), productProperties.getAir_preferred_host()));
+					throw new AirAvailabilityException();
+				}
 			}
 		}
 
