@@ -1,16 +1,16 @@
 package jobs;
 
 import org.springframework.batch.item.ItemProcessor;
-import domain.models.HVC;
+import domain.models.HVConsumer;
 
-public class WishesNotificationProcessor implements ItemProcessor<HVC, HVC> {
+public class WishesNotificationProcessor implements ItemProcessor<HVConsumer, HVConsumer> {
 
 	public WishesNotificationProcessor() {
 		
 	}
 
 	@Override
-	public HVC process(HVC hvc) {
+	public HVConsumer process(HVConsumer hvc) {
 		// TODO Auto-generated method stub
 
 		try {

@@ -8,18 +8,18 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
-import domain.models.HVC;
+import domain.models.HVConsumer;
 
-public class SynchronizingItemReader implements ItemReader<HVC>, ItemStream {
+public class SynchronizingHVConsumerReader implements ItemReader<HVConsumer>, ItemStream {
 
-	private ItemReader<HVC> delegate;
+	private ItemReader<HVConsumer> delegate;
 	// private JdbcCursorItemReader<HVC> delegate;
 
-	public ItemReader<HVC> getDelegate() {
+	public ItemReader<HVConsumer> getDelegate() {
 		return delegate;
 	}
 
-	public void setDelegate(ItemReader<HVC> delegate) {
+	public void setDelegate(ItemReader<HVConsumer> delegate) {
 		this.delegate = delegate;
 	}
 
@@ -48,7 +48,7 @@ public class SynchronizingItemReader implements ItemReader<HVC>, ItemStream {
 	}
 
 	@Override
-	public synchronized HVC read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+	public synchronized HVConsumer read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
 		// TODO Auto-generated method stub
 		return delegate.read(); // Synchronizes read method
 	}

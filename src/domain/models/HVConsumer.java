@@ -2,17 +2,17 @@ package domain.models;
 
 import java.util.Date;
 
-public class HVC extends MSISDN {
+public class HVConsumer extends MSISDN {
 
 	private String name;
 	private int language, segment, bonus;
 	private Date birth_date, last_update_time, bonus_expires_in;
 
-	public HVC() {
+	public HVConsumer() {
 		super();
 	}
 
-	public HVC(int id, String msisdn, String name, int segment, int language, Date birth_date) {
+	public HVConsumer(int id, String msisdn, String name, int segment, int language, Date birth_date) {
 		super(id, msisdn);
 		this.name = name;
 		this.segment = segment;
@@ -82,7 +82,7 @@ public class HVC extends MSISDN {
 
 	public boolean equals (Object pp) {
 		try {
-			HVC p = (HVC) pp;
+			HVConsumer p = (HVConsumer) pp;
 
 			if(this.getValue().equals(p.getValue())) {
 				/*if(p.last_update_time != null) {

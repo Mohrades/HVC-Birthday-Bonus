@@ -5,9 +5,9 @@ import java.util.HashSet;
 
 import connexions.AIRRequest;
 import dao.DAO;
-import dao.queries.HVCDAOJdbc;
+import dao.queries.HVConsumersDAOJdbc;
 import dao.queries.RollBackDAOJdbc;
-import domain.models.HVC;
+import domain.models.HVConsumer;
 import domain.models.RollBack;
 import exceptions.AirAvailabilityException;
 import util.AccumulatorInformation;
@@ -23,10 +23,22 @@ public class ProductActions {
 	}
 
 	@SuppressWarnings("deprecation")
-	public int doActions(DAO dao, HVC hvc, int offer, int da, long volume, int accumulator) throws AirAvailabilityException {
+	public int doActions(DAO dao, HVConsumer hvc, int offer, int da, long volume, int accumulator) throws AirAvailabilityException {
 		AIRRequest request = new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host());
 
 		int responseCode = -1;
+
+		// attempts
+		int retry = 0;
+
+		while(productProperties.getAir_preferred_host() == -1) {
+			if(retry >= 3) throw new AirAvailabilityException();
+
+			productProperties.setAir_preferred_host((byte) (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).testConnection(productProperties.getAir_test_connection_msisdn(), productProperties.getAir_preferred_host()));
+			retry++;
+		}
+
+		retry = 0;
 
 		if((productProperties.getAir_preferred_host() != -1) && ((request.getBalanceAndDate(hvc.getValue(), 0)) != null)) {
 			try {
@@ -36,7 +48,7 @@ public class ProductActions {
 				// set bonus expiry date
 				hvc.setBonus_expires_in(expires);
 
-				if(new HVCDAOJdbc(dao).locking(hvc, true) > 0) {
+				if(new HVConsumersDAOJdbc(dao).locking(hvc, true) > 0) {
 					responseCode = 1;
 
 					HashSet<BalanceAndDate> balances = new HashSet<BalanceAndDate>();
@@ -59,7 +71,7 @@ public class ProductActions {
 					        // release waiting for the response : set waitingForResponse true
 					        request.setWaitingForResponse(true); request.setSuccessfully(true);
 
-							if(new HVCDAOJdbc(dao).saveOneHVC(hvc) > 0) {
+							if(new HVConsumersDAOJdbc(dao).saveOneHVConsumer(hvc) > 0) {
 								responseCode = 0;
 							}
 						}
@@ -88,7 +100,7 @@ public class ProductActions {
 			} finally {
 				if(responseCode >= 0) {
 					// unlock
-					(new HVCDAOJdbc(dao)).locking(hvc, false);
+					(new HVConsumersDAOJdbc(dao)).locking(hvc, false);
 
 					if(request.isWaitingForResponse()) {
 						if(request.isSuccessfully());

@@ -9,12 +9,12 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.MessageSource;
 import connexions.AIRRequest;
-import domain.models.HVC;
+import domain.models.HVConsumer;
 import product.ProductProperties;
 import tools.SMPPConnector;
 import util.AccountDetails;
 
-public class WishesNotificationWriter implements ItemWriter<HVC> {
+public class WishesNotificationWriter implements ItemWriter<HVConsumer> {
 
 	private MessageSource i18n;
 	private ProductProperties productProperties;
@@ -40,13 +40,13 @@ public class WishesNotificationWriter implements ItemWriter<HVC> {
 	}
 
 	@Override
-	public void write(List<? extends HVC> hvcs) {
+	public void write(List<? extends HVConsumer> hvcs) {
 		// TODO Auto-generated method stub
 
 		try {
 			Logger logger = LogManager.getLogger("logging.log4j.SubmitSMLogger");
 
-			for(HVC hvc : hvcs) {
+			for(HVConsumer hvc : hvcs) {
 				if(hvc != null) {
 					try {
 						AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getAccountDetails(hvc.getValue());

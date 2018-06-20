@@ -16,7 +16,7 @@ import org.springframework.context.MessageSource;
 
 import com.google.common.base.Splitter;
 
-import domain.models.HVC;
+import domain.models.HVConsumer;
 import domain.models.USSDRequest;
 import filter.MSISDNValidator;
 import product.ProductProperties;
@@ -28,7 +28,7 @@ public class USSDFlow {
 
 	}
 
-	public Map<String, Object> validate(USSDRequest ussd, HVC hvc, Document document, ProductProperties productProperties, MessageSource i18n) {
+	public Map<String, Object> validate(USSDRequest ussd, HVConsumer hvc, Document document, ProductProperties productProperties, MessageSource i18n) {
 		// on crée le modèle de la vue à afficher
 		Map<String, Object> modele = new HashMap<String, Object>();
 		// initialization
@@ -288,7 +288,7 @@ public class USSDFlow {
 		return modele;
 	}
 
-	public void handleException(Map<String, Object> modele, MessageSource i18n, HVC hvc) {
+	public void handleException(Map<String, Object> modele, MessageSource i18n, HVConsumer hvc) {
 		modele.put("status", -1);
 		modele.put("message", i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 	}

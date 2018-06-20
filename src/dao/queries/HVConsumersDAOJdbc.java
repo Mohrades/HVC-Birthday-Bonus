@@ -8,14 +8,14 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import dao.DAO;
-import dao.mapping.HVCRowMapper;
-import domain.models.HVC;
+import dao.mapping.HVConsumerRowMapper;
+import domain.models.HVConsumer;
 
-public class HVCDAOJdbc {
+public class HVConsumersDAOJdbc {
 
 	private DAO dao;
 
-	public HVCDAOJdbc(DAO dao) {
+	public HVConsumersDAOJdbc(DAO dao) {
 		this.dao = dao;
 	}
 
@@ -23,7 +23,7 @@ public class HVCDAOJdbc {
 		return dao.getJdbcTemplate();
 	}
 
-	public int saveOneHVC(HVC hvc) {
+	public int saveOneHVConsumer(HVConsumer hvc) {
 		try {
 			if(hvc.getId() == 0) {
 				// Tout autre caractère suivi d'un antislash est pris littéralement. Du coup, pour inclure un caractère antislash, écrivez deux antislashs (\\).
@@ -51,7 +51,7 @@ public class HVCDAOJdbc {
 		return 0;
 	}
 	
-	public int locking(HVC hvc, boolean locked) {
+	public int locking(HVConsumer hvc, boolean locked) {
 		try {
 			if(locked) {
 				return getJdbcTemplate().update("UPDATE HVC_BIRTHDAY_BONUS_MSISDN_EBA SET LOCKED = 1 WHERE ((ID = " + hvc.getId() + ") AND (BONUS IS NULL) AND (LOCKED = 0))");
@@ -69,25 +69,25 @@ public class HVCDAOJdbc {
 		return 0;
 	}
 
-	public HVC getOneHVC(int id) {
-		List<HVC> hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ID = " + id, new HVCRowMapper());
+	public HVConsumer getOneHVConsumer(int id) {
+		List<HVConsumer> hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ID = " + id, new HVConsumerRowMapper());
 		return hvcs.isEmpty() ? null : hvcs.get(0);
 	}
 
 	@SuppressWarnings("deprecation")
-	public HVC getOneHVC(String msisdn, int expires) {
-		List<HVC> hvcs = null;
+	public HVConsumer getOneHVConsumer(String msisdn, int expires) {
+		List<HVConsumer> hvcs = null;
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy");
 		Date now = new Date();
 
 		if(expires == 0) {
-			hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ((BIRTH_DATE = '" + dateFormat.format(now) + "') AND (MSISDN = '" + msisdn + "'))", new HVCRowMapper());
+			hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ((BIRTH_DATE = '" + dateFormat.format(now) + "') AND (MSISDN = '" + msisdn + "'))", new HVConsumerRowMapper());
 		}
 		else {
 			Date yesterday = new Date();
 			yesterday.setDate(yesterday.getDate() - 1);
 
-			hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE (((BIRTH_DATE = '" + dateFormat.format(yesterday) + "') AND (MSISDN = '" + msisdn + "')) OR ((BIRTH_DATE = '" + dateFormat.format(now) + "') AND (MSISDN = '" + msisdn + "'))) ORDER BY BIRTH_DATE DESC", new HVCRowMapper());
+			hvcs = getJdbcTemplate().query("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE (((BIRTH_DATE = '" + dateFormat.format(yesterday) + "') AND (MSISDN = '" + msisdn + "')) OR ((BIRTH_DATE = '" + dateFormat.format(now) + "') AND (MSISDN = '" + msisdn + "'))) ORDER BY BIRTH_DATE DESC", new HVConsumerRowMapper());
 		}
 
 		if( hvcs.isEmpty()) return null;
@@ -96,7 +96,7 @@ public class HVCDAOJdbc {
 			// (id > 0) ==> HVC birth date is today
 			// (id < 0) ==> HVC birth date is yesterday
 
-			HVC hvc = hvcs.get(0);
+			HVConsumer hvc = hvcs.get(0);
 
 			if(hvcs.size() == 1) {
 				if(dateFormat.format(now).equals(dateFormat.format(hvc.getBirth_date())));
@@ -108,11 +108,11 @@ public class HVCDAOJdbc {
 		}
 	}
 
-	public void deleteOneHVC(int id) {
+	public void deleteOneHVConsumer(int id) {
 		getJdbcTemplate().update("DELETE FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ID = " + id);
 	}
 
-	public void deleteOneHVC(String msisdn) {
+	public void deleteOneHVConsumer(String msisdn) {
 		getJdbcTemplate().update("DELETE FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "') AND (MSISDN = '" + msisdn + "'))");
 	}
 }

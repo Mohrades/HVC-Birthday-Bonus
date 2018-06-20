@@ -28,7 +28,7 @@
 		<!-- java.lang.IllegalArgumentException: Cron expression must consist of 6 fields (found 7 in "0 00 0 1 APR,MAY,JUN ? 2018") -->
 
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
-  		<task:scheduled ref="jobs" method="import_hcvs" cron="0 00 04 ? * *" />
+  		<task:scheduled ref="jobs" method="import_hvcs" cron="0 00 04 ? * *" />
 
 		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
 
@@ -53,9 +53,9 @@
 	  </batch:step>
 	</batch:job>
 
-	<batch:job id="importHVCJob">
-	  <batch:step id="importHVCs">
-	  	<batch:tasklet ref="importHVCsTasklet" transaction-manager="transactionManager">
+	<batch:job id="importHVConsumersJob">
+	  <batch:step id="importHVConsumers">
+	  	<batch:tasklet ref="importHVConsumersTasklet" transaction-manager="transactionManager">
 		  <!-- Intercepting Step Execution -->
 		  <!-- Just as with the Job, there are many events during the execution of a Step where a user may need to perform some functionality.
 		  This can be accomplished with one of many Step scoped listeners. -->
@@ -71,17 +71,19 @@
 	<batch:job id="happyBirthdayWishesJob">
 	  <batch:step id="wishesNotificationThroughSms">
 	  	<batch:tasklet>
-	      <batch:chunk commit-interval="100">
+	      <!-- <batch:chunk commit-interval="100"> -->
+	      <batch:chunk commit-interval="50">
+	      <!-- <batch:chunk commit-interval="30"> -->
 	        <batch:reader>
 		  		<!-- reader must be evaluated for every scheduled execution of the given job. -->
 		  		<!-- If you set the scope of the bean to step, then a new bean will be created every time the step is executed. -->
-				<bean class="jobs.HVCsReader" scope="step">
+				<bean class="jobs.HVConsumersReader" scope="step">
 					<constructor-arg index="0" type="int" value="0" />
 			   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
 
 				  	<property name="dataSource" ref="db_connection" />
 				  	<property name="rowMapper">
-				    	<bean class="dao.mapping.HVCRowMapper" />
+				    	<bean class="dao.mapping.HVConsumerRowMapper" />
 				  	</property>
 				  	<!-- <property name="sql">
 				  		<value>
@@ -118,7 +120,7 @@
 	<batch:job id="defaultBonusJob">
 	  <batch:listeners>
       	<batch:listener>
-          <bean class="jobs.listeners.DefaultBonusJobListener" scope="step" />
+          <bean class="jobs.listeners.DefaultBonusJobListener" />
         </batch:listener>
   	  </batch:listeners>
 
@@ -126,8 +128,8 @@
 	  <!-- <batch:step id="stepA" next="stepB" /> -->
 	  <batch:step id="defaultBonus">
 	  	<batch:tasklet task-executor="MultithreadedStepsTaskExecutor" throttle-limit="3">
-	      <!-- <batch:chunk reader="allHVCsWithNoBonusReader" processor="defaultBonusProcessor" writer="defaultBonusWriter" commit-interval="10" skip-limit="10" retry-limit="3"> -->
-	      <batch:chunk reader="allHVCsWithNoBonusReader" commit-interval="10" skip-limit="10" retry-limit="3">
+	      <!-- <batch:chunk reader="allHVCsWithNoBonusReader" processor="defaultBonusProcessor" writer="defaultBonusWriter" commit-interval="10" skip-limit="12" retry-limit="3"> -->
+	      <batch:chunk reader="allHVConsumersWithNoBonusReader" commit-interval="10" skip-limit="12" retry-limit="3">
 
 	        <batch:processor>
 	          <bean class="jobs.DefaultBonusProcessor">
@@ -212,18 +214,18 @@
 	Finally, you  disable Spring Batch state management. This is the other requirement to make the item reader thread-safe (with the synchronization of the read method).
 	But by doing that, you lose the reader’s restartability feature, because the item reader won’t know where it left off after a failure.
 	Luckily, the process indicator is there to enable restartability: the reader reads only unprocessed items. The item writer then needs to flag the product as handled using the processed column and then write the item, as described in the following listing. -->
-	<bean id="allHVCsWithNoBonusReader" class="jobs.SynchronizingItemReader">
+	<bean id="allHVConsumersWithNoBonusReader" class="jobs.SynchronizingHVConsumerReader">
 	  	<property name="delegate">
 	  		<!-- reader must be evaluated for every scheduled execution of the given job. -->
 	  		<!-- If you set the scope of the bean to step, then a new bean will be created every time the step is executed. -->
-			<bean class="jobs.HVCsReader" scope="step">
+			<bean class="jobs.HVConsumersReader" scope="step">
 				<constructor-arg index="0" type="int" value="2" />
 		   		<!-- <constructor-arg index="1" type="java.lang.String" value="${AWS_SECRET_ACCESS_KEY}" /> -->
 
 			  	<property name="dataSource" ref="db_connection" />
 			  	<property name="saveState" value="false" />
 			  	<property name="rowMapper">
-			    	<bean class="dao.mapping.HVCRowMapper" />
+			    	<bean class="dao.mapping.HVConsumerRowMapper" />
 			  	</property>
 			  	<!-- <property name="sql">
 			  		<value>

@@ -2,12 +2,12 @@ package jobs;
 
 import org.springframework.batch.item.ItemProcessor;
 import dao.DAO;
-import domain.models.HVC;
+import domain.models.HVConsumer;
 import exceptions.AirAvailabilityException;
 import product.ProductActions;
 import product.ProductProperties;
 
-public class DefaultBonusProcessor implements ItemProcessor<HVC, HVC> {
+public class DefaultBonusProcessor implements ItemProcessor<HVConsumer, HVConsumer> {
 
 	private DAO dao;
 
@@ -34,7 +34,7 @@ public class DefaultBonusProcessor implements ItemProcessor<HVC, HVC> {
 	}
 
 	@Override
-	public HVC process(HVC hvc) throws AirAvailabilityException {
+	public HVConsumer process(HVConsumer hvc) throws AirAvailabilityException {
 		// TODO Auto-generated method stub
 
 		try {

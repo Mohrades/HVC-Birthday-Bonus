@@ -19,10 +19,10 @@ import com.google.common.base.Splitter;
 
 import connexions.AIRRequest;
 import dao.DAO;
-import dao.queries.HVCDAOJdbc;
+import dao.queries.HVConsumersDAOJdbc;
 import dao.queries.USSDRequestDAOJdbc;
 import dao.queries.USSDServiceDAOJdbc;
-import domain.models.HVC;
+import domain.models.HVConsumer;
 import domain.models.USSDRequest;
 import domain.models.USSDService;
 import exceptions.AirAvailabilityException;
@@ -44,7 +44,7 @@ public class InputHandler {
 	@SuppressWarnings("deprecation")
 	public void handle(MessageSource i18n, ProductProperties productProperties, Map<String, String> parameters, Map<String, Object> modele, HttpServletRequest request, DAO dao) {
 		USSDRequest ussd = null;
-		HVC hvc = null;
+		HVConsumer hvc = null;
 		int language = 1;
 
 		try {
@@ -72,7 +72,7 @@ public class InputHandler {
 				}
 				else {
 					// check msisdn is alive hvc (yesterday and today)
-					hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), -1);
+					hvc = new HVConsumersDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), -1);
 
 					if(hvc == null) {
 						modele.put("next", false);
@@ -102,7 +102,7 @@ public class InputHandler {
 			}
 			else {
 				// check msisdn is alive hvc (only today)
-				hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), 0);
+				hvc = new HVConsumersDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), 0);
 				hvc.setLanguage(language);
 
 				ussd.setStep(ussd.getStep() + 1);
@@ -179,7 +179,7 @@ public class InputHandler {
 		}
 	}
 
-	public void statut(MessageSource i18n, ProductProperties productProperties, DAO dao, HVC hvc, USSDRequest ussd, Map<String, Object> modele) {
+	public void statut(MessageSource i18n, ProductProperties productProperties, DAO dao, HVConsumer hvc, USSDRequest ussd, Map<String, Object> modele) {
 		/*HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), -1);*/
 
 		if((hvc == null) || (hvc.getBonus() <= 0)) {
@@ -258,7 +258,7 @@ public class InputHandler {
 	}
 
 	@SuppressWarnings("deprecation")
-	public void setBonus(DAO dao, HVC hvc, USSDRequest ussd, MessageSource i18n, ProductProperties productProperties, Map<String, Object> modele, List<String> inputs) throws AirAvailabilityException {
+	public void setBonus(DAO dao, HVConsumer hvc, USSDRequest ussd, MessageSource i18n, ProductProperties productProperties, Map<String, Object> modele, List<String> inputs) throws AirAvailabilityException {
 		/*HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), 0);*/
 
 		int choice = Integer.parseInt(inputs.get(1));

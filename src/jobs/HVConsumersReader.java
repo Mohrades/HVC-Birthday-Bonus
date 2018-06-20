@@ -6,9 +6,9 @@ import java.util.Date;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 
 @SuppressWarnings("rawtypes")
-public class HVCsReader extends JdbcCursorItemReader {
+public class HVConsumersReader extends JdbcCursorItemReader {
 
-	public HVCsReader(int type) {
+	public HVConsumersReader(int type) {
 		if(type == 0) {
 			setSql("SELECT ID,MSISDN,NAME,SEGMENT,LANGUAGE,BIRTH_DATE,BONUS,BONUS_EXPIRES_IN,LAST_UPDATE_TIME FROM HVC_BIRTHDAY_BONUS_MSISDN_EBA WHERE (BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "')");
 		}

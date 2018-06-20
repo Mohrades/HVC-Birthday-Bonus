@@ -6,7 +6,7 @@ import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import dao.DAO;
-import dao.queries.BIRTHDAY_REPORT_TO_DATE_DAOJdbc;
+import dao.queries.BirthDaysDAOJdbc;
 import dao.queries.USSDServiceDAOJdbc;
 import domain.models.USSDService;
 import product.ProductProperties;
@@ -91,7 +91,7 @@ public class JobRunListener implements StepExecutionListener {
 			stepExecution.setTerminateOnly(); // Sets stop flag if necessary
 	        // stepExecution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
 	        stepExecution.setExitStatus(new ExitStatus("STOPPED WITH DATE EXCLUDED", "Job should not be run right now."));
-		}*/else if((new BIRTHDAY_REPORT_TO_DATE_DAOJdbc(dao)).isBirthDayReported()) {
+		}*/else if((new BirthDaysDAOJdbc(dao)).isBirthDayReported()) {
 			stepExecution.setTerminateOnly(); // Sets stop flag if necessary
 	        // stepExecution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
 	        stepExecution.setExitStatus(new ExitStatus("STOPPED WITH DATE EXCLUDED", "Job should not be run right now."));

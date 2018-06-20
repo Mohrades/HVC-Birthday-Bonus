@@ -25,7 +25,7 @@ public class ScheduledTasks {
 	private Job cleanExpiredUssdRequestJob;
 
 	@Autowired
-	private Job importHVCJob;
+	private Job importHVConsumersJob;
 
 	@Autowired
 	private Job happyBirthdayWishesJob;
@@ -50,8 +50,8 @@ public class ScheduledTasks {
 		execute(cleanExpiredUssdRequestJob);
 	}
 
-	public void import_hcvs() {
-		execute(importHVCJob);
+	public void import_hvcs() {
+		execute(importHVConsumersJob);
 	}
 
 	public void notify_wishes() {

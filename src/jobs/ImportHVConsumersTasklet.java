@@ -23,16 +23,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import dao.DAO;
-import dao.queries.BIRTHDAY_REPORT_TO_DATE_DAOJdbc;
-import dao.queries.HVCDAOJdbc;
+import dao.queries.BirthDaysDAOJdbc;
+import dao.queries.HVConsumersDAOJdbc;
 import dao.queries.USSDServiceDAOJdbc;
-import domain.models.HVC;
+import domain.models.HVConsumer;
 import domain.models.USSDService;
 import product.ProductProperties;
-import tools.HappyBirthdayEventPublisher;
+import tools.HappyBirthDayEventPublisher;
 
-@Component("importHVCsTasklet")
-public class ImportHVCsTasklet implements Tasklet {
+@Component("importHVConsumersTasklet")
+public class ImportHVConsumersTasklet implements Tasklet {
 
 	@Autowired
 	private DAO dao;
@@ -60,7 +60,7 @@ public class ImportHVCsTasklet implements Tasklet {
 				chunkContext.getStepContext().getStepExecution().setTerminateOnly();
 				stepContribution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
 			}*/
-			else if((new BIRTHDAY_REPORT_TO_DATE_DAOJdbc(dao)).isBirthDayReported()) {
+			else if((new BirthDaysDAOJdbc(dao)).isBirthDayReported()) {
 				// Sets stop flag
 				chunkContext.getStepContext().getStepExecution().setTerminateOnly();
 				stepContribution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
@@ -71,7 +71,7 @@ public class ImportHVCsTasklet implements Tasklet {
 				PreparedStatement ps = null;
 				ResultSet rs = null;
 
-				HashSet <HVC> allMSISDN_Today_Is_BIRTHDATE = new HashSet <HVC>();
+				HashSet <HVConsumer> allMSISDN_Today_Is_BIRTHDATE = new HashSet <HVConsumer>();
 
 				try {
 					Class.forName("oracle.jdbc.driver.OracleDriver"); // chargement du pilote JDBC
@@ -88,7 +88,7 @@ public class ImportHVCsTasklet implements Tasklet {
 					// Anciens propriétaires d'un MSISDN
 					// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,BIRTHDATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM')= TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME < ANY (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
 					// La mise à jour la plus récente !!
-					List<Map<String, Object>>  reporteds = (new BIRTHDAY_REPORT_TO_DATE_DAOJdbc(dao)).getAllReportedBirthDays();
+					List<Map<String, Object>>  reporteds = (new BirthDaysDAOJdbc(dao)).getAllReportedBirthDays();
 
 					if(reporteds.isEmpty()) {
 						ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM') = TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
@@ -136,7 +136,7 @@ public class ImportHVCsTasklet implements Tasklet {
 						}
 
 						String identity = (((rs.getString("FIRSTNAME") == null) ? "" : rs.getString("FIRSTNAME").trim()) + " " + ((rs.getString("LASTNAME") == null) ? "" : rs.getString("LASTNAME").trim())).trim();
-						allMSISDN_Today_Is_BIRTHDATE.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, identity.isEmpty() ? msisdn : identity, 0, language, rs.getDate("BIRTH_DATE")));
+						allMSISDN_Today_Is_BIRTHDATE.add(new HVConsumer(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, identity.isEmpty() ? msisdn : identity, 0, language, rs.getDate("BIRTH_DATE")));
 					}
 
 					connexion.commit(); // commit transaction
@@ -156,7 +156,7 @@ public class ImportHVCsTasklet implements Tasklet {
 					}
 				}
 
-				HashSet <HVC> allHVC = new HashSet <HVC>();
+				HashSet <HVConsumer> allHVC = new HashSet <HVConsumer>();
 
 				try {
 					Class.forName("oracle.jdbc.driver.OracleDriver"); // chargement du pilote JDBC
@@ -180,7 +180,7 @@ public class ImportHVCsTasklet implements Tasklet {
 
 						int segment = productProperties.getCustomer_segment_list().contains(CUSTOMER_SEGMENT) ? (productProperties.getCustomer_segment_list().indexOf(CUSTOMER_SEGMENT) + 1) : 0;
 						// allHVC.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, null, CUSTOMER_SEGMENT.equalsIgnoreCase("BRONZE_P100") ? 1 : CUSTOMER_SEGMENT.equalsIgnoreCase("SILVER_P100") ? 2 : CUSTOMER_SEGMENT.equalsIgnoreCase("GOLD_P100") ? 3 : CUSTOMER_SEGMENT.equalsIgnoreCase("PREMIUM_P100") ? 4 : CUSTOMER_SEGMENT.equalsIgnoreCase("PLATINUM_P100") ? 5 : CUSTOMER_SEGMENT.equalsIgnoreCase("DIAMOND_P100") ? 6 : CUSTOMER_SEGMENT.equalsIgnoreCase("IVOIRE_P100") ? 7 : CUSTOMER_SEGMENT.equalsIgnoreCase("GOLD_P100") ? 8 : 0, 0, null));
-						allHVC.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, null, segment, 0, null));
+						allHVC.add(new HVConsumer(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, null, segment, 0, null));
 					}
 
 					connexion.commit(); // commit transaction
@@ -201,21 +201,21 @@ public class ImportHVCsTasklet implements Tasklet {
 				}
 
 				// publishers
-				HashSet <HVC> allMSISDN_Today_Is_BIRTHDATE_COPY = null;
+				HashSet <HVConsumer> allMSISDN_Today_Is_BIRTHDATE_COPY = null;
 				List<String> happy_birthday_bonus_event_listeners = productProperties.getHappy_birthday_bonus_event_listeners();
 				if(happy_birthday_bonus_event_listeners != null) {
-					allMSISDN_Today_Is_BIRTHDATE_COPY = new HashSet <HVC>(allMSISDN_Today_Is_BIRTHDATE);
+					allMSISDN_Today_Is_BIRTHDATE_COPY = new HashSet <HVConsumer>(allMSISDN_Today_Is_BIRTHDATE);
 				}
 
 				// croiser today_is_birthday and HVC
 				allMSISDN_Today_Is_BIRTHDATE.retainAll(allHVC);
 
-				for(HVC hvc : allMSISDN_Today_Is_BIRTHDATE) {
+				for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE) {
 					try {
 						// AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(hvc.getValue());
 						// if(accountDetails != null) hvc.setLanguage(accountDetails.getLanguageIDCurrent());
 						// store hvc
-						new HVCDAOJdbc(dao).saveOneHVC(hvc);
+						new HVConsumersDAOJdbc(dao).saveOneHVConsumer(hvc);
 
 					} catch(Throwable th) {
 
@@ -227,10 +227,10 @@ public class ImportHVCsTasklet implements Tasklet {
 					// croiser today_is_birthday and not HVC
 					allMSISDN_Today_Is_BIRTHDATE_COPY.removeAll(allHVC);
 
-					for(HVC hvc : allMSISDN_Today_Is_BIRTHDATE_COPY) {
+					for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE_COPY) {
 						try {
 							for(String url : happy_birthday_bonus_event_listeners) {
-								if((new HappyBirthdayEventPublisher()).notify(url, hvc.getValue(), hvc.getName(), hvc.getLanguage(), "eBA") == 0) ;
+								if((new HappyBirthDayEventPublisher()).notify(url, hvc.getValue(), hvc.getName(), hvc.getLanguage(), "eBA") == 0) ;
 							}
 
 						} catch(Throwable th) {
