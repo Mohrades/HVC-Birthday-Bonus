@@ -19,26 +19,43 @@ import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import dao.DAO;
 import dao.queries.BirthDaysDAOJdbc;
-import dao.queries.HVConsumersDAOJdbc;
+import dao.queries.HVConsumerDAOJdbc;
 import dao.queries.USSDServiceDAOJdbc;
 import domain.models.HVConsumer;
 import domain.models.USSDService;
 import product.ProductProperties;
 import tools.HappyBirthDayEventPublisher;
 
-@Component("importHVConsumersTasklet")
+/*@Component("importHVConsumersTasklet")*/
 public class ImportHVConsumersTasklet implements Tasklet {
 
-	@Autowired
+	/*@Autowired*/
 	private DAO dao;
 
-	@Autowired
+	/*@Autowired*/
 	private ProductProperties productProperties;
+
+	public ImportHVConsumersTasklet() {
+		
+	}
+
+	public DAO getDao() {
+		return dao;
+	}
+
+	public void setDao(DAO dao) {
+		this.dao = dao;
+	}
+
+	public ProductProperties getProductProperties() {
+		return productProperties;
+	}
+
+	public void setProductProperties(ProductProperties productProperties) {
+		this.productProperties = productProperties;
+	}
 
 	@Override
 	public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
@@ -212,10 +229,8 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 				for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE) {
 					try {
-						// AccountDetails accountDetails = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold())).getAccountDetails(hvc.getValue());
-						// if(accountDetails != null) hvc.setLanguage(accountDetails.getLanguageIDCurrent());
 						// store hvc
-						new HVConsumersDAOJdbc(dao).saveOneHVConsumer(hvc);
+						new HVConsumerDAOJdbc(dao).saveOneHVConsumer(hvc);
 
 					} catch(Throwable th) {
 

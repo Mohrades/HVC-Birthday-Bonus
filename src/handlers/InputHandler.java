@@ -19,7 +19,7 @@ import com.google.common.base.Splitter;
 
 import connexions.AIRRequest;
 import dao.DAO;
-import dao.queries.HVConsumersDAOJdbc;
+import dao.queries.HVConsumerDAOJdbc;
 import dao.queries.USSDRequestDAOJdbc;
 import dao.queries.USSDServiceDAOJdbc;
 import domain.models.HVConsumer;
@@ -72,7 +72,7 @@ public class InputHandler {
 				}
 				else {
 					// check msisdn is alive hvc (yesterday and today)
-					hvc = new HVConsumersDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), -1);
+					hvc = new HVConsumerDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), -1);
 
 					if(hvc == null) {
 						modele.put("next", false);
@@ -102,7 +102,7 @@ public class InputHandler {
 			}
 			else {
 				// check msisdn is alive hvc (only today)
-				hvc = new HVConsumersDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), 0);
+				hvc = new HVConsumerDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), 0);
 				hvc.setLanguage(language);
 
 				ussd.setStep(ussd.getStep() + 1);
@@ -203,10 +203,10 @@ public class InputHandler {
 				if(hvc.getBonus() == 2) {
 					long volume = (long) (((double)balance.getAccountValue()) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
 					if(volume >= 1024) {
-						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {new Formatter().format("%.2f", ((double)volume/1024)), "Go", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
+						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {new Formatter().format("%.2f", ((double)volume/1024)), (hvc.getLanguage() == 2) ? "GB" : "Go", (hvc.getLanguage() == 2) ? (new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm")).format(balance.getExpiryDate()) : (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 					}
 					else {
-						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {volume, "Mo", (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
+						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {volume, (hvc.getLanguage() == 2) ? "MB" : "Mo", (hvc.getLanguage() == 2) ? (new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm")).format(balance.getExpiryDate()) : (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 					}
 				}
 				else {

@@ -5,7 +5,7 @@ import java.util.HashSet;
 
 import connexions.AIRRequest;
 import dao.DAO;
-import dao.queries.HVConsumersDAOJdbc;
+import dao.queries.HVConsumerDAOJdbc;
 import dao.queries.RollBackDAOJdbc;
 import domain.models.HVConsumer;
 import domain.models.RollBack;
@@ -40,43 +40,47 @@ public class ProductActions {
 
 		retry = 0;
 
-		if((productProperties.getAir_preferred_host() != -1) && ((request.getBalanceAndDate(hvc.getValue(), 0)) != null)) {
-			try {
-				Date expires = new Date();
-				expires.setDate(expires.getDate() + 1);
-				expires.setSeconds(59);expires.setMinutes(59);expires.setHours(23);
-				// set bonus expiry date
-				hvc.setBonus_expires_in(expires);
+		try {
+			Date expires = new Date();
+			expires.setDate(expires.getDate() + 1);
+			expires.setSeconds(59); expires.setMinutes(59); expires.setHours(23);
+			// set bonus expiry date
+			hvc.setBonus_expires_in(expires);
 
-				if(new HVConsumersDAOJdbc(dao).locking(hvc, true) > 0) {
-					responseCode = 1;
+			if(new HVConsumerDAOJdbc(dao).locking(hvc, true) > 0) {
+				responseCode = 1;
 
-					HashSet<BalanceAndDate> balances = new HashSet<BalanceAndDate>();
-					if(da == 0) balances.add(new BalanceAndDate(da, volume, null));
-					else balances.add(new DedicatedAccount(da, volume, expires));
+				HashSet<BalanceAndDate> balances = new HashSet<BalanceAndDate>();
+				if(da == 0) balances.add(new BalanceAndDate(da, volume, null));
+				else balances.add(new DedicatedAccount(da, volume, expires));
 
-					// update Anumber Balance
-					if(request.updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA")) {
-						// update Anumber Offer
-						if((offer == 0) || (request.updateOffer(hvc.getValue(), offer, null, expires, null, "eBA"))) {
-							// reset accumulator
-					        HashSet<AccumulatorInformation> accumulatorInformationList = new HashSet<AccumulatorInformation>();
-					        AccumulatorInformation accumulatorInformation = new AccumulatorInformation(accumulator, 0, null, null);
-					        accumulatorInformation.setAccumulatorValueRelative(false);
-					        accumulatorInformationList.add(accumulatorInformation);
+				// update Anumber Balance
+				if(request.updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA")) {
+					// update Anumber Offer
+					if((offer == 0) || (request.updateOffer(hvc.getValue(), offer, null, expires, null, "eBA"))) {
+						// reset accumulator
+				        HashSet<AccumulatorInformation> accumulatorInformationList = new HashSet<AccumulatorInformation>();
+				        AccumulatorInformation accumulatorInformation = new AccumulatorInformation(accumulator, 0, null, null);
+				        accumulatorInformation.setAccumulatorValueRelative(false);
+				        accumulatorInformationList.add(accumulatorInformation);
 
-					        // don't waiting for the response : set waitingForResponse false
-					        request.setWaitingForResponse(false);
-					        request.updateAccumulators(hvc.getValue(), accumulatorInformationList, "eBA");
-					        // release waiting for the response : set waitingForResponse true
-					        request.setWaitingForResponse(true); request.setSuccessfully(true);
+				        // don't waiting for the response : set waitingForResponse false
+				        request.setWaitingForResponse(false);
+				        request.updateAccumulators(hvc.getValue(), accumulatorInformationList, "eBA");
+				        // release waiting for the response : set waitingForResponse true
+				        request.setWaitingForResponse(true); request.setSuccessfully(true);
 
-							if(new HVConsumersDAOJdbc(dao).saveOneHVConsumer(hvc) > 0) {
-								responseCode = 0;
-							}
+						if(new HVConsumerDAOJdbc(dao).saveOneHVConsumer(hvc) > 0) {
+							responseCode = 0;
 						}
-						// rollback
 						else {
+							responseCode = -1;
+							new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 3, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+						}
+					}
+					// rollback
+					else {
+						if(request.isSuccessfully()) {
 							balances.clear();
 							if(da == 0) balances.add(new BalanceAndDate(da, -volume, null));
 							else balances.add(new DedicatedAccount(da, -volume, expires));
@@ -87,37 +91,31 @@ public class ProductActions {
 								else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
 							}
 						}
-					}
-					// rollback
-					else {
-						if(request.isSuccessfully()) new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-						else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-					}
-				}
-
-			} catch(Throwable th) {
-
-			} finally {
-				if(responseCode >= 0) {
-					// unlock
-					(new HVConsumersDAOJdbc(dao)).locking(hvc, false);
-
-					if(request.isWaitingForResponse()) {
-						if(request.isSuccessfully());
 						else {
-							productProperties.setAir_preferred_host((byte) (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).testConnection(productProperties.getAir_test_connection_msisdn(), productProperties.getAir_preferred_host()));
-							throw new AirAvailabilityException();
+							new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -2, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
 						}
 					}
 				}
-			}
-		}
-		else {
-			if((productProperties.getAir_preferred_host() != -1) && (request.isWaitingForResponse())) {
-				if(request.isSuccessfully());
+				// rollback
 				else {
-					productProperties.setAir_preferred_host((byte) (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).testConnection(productProperties.getAir_test_connection_msisdn(), productProperties.getAir_preferred_host()));
-					throw new AirAvailabilityException();
+					if(request.isSuccessfully()) new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+					else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+				}
+			}
+
+		} catch(Throwable th) {
+
+		} finally {
+			if(responseCode >= 0) {
+				// unlock
+				(new HVConsumerDAOJdbc(dao)).locking(hvc, false);
+
+				if(request.isWaitingForResponse()) {
+					if(request.isSuccessfully());
+					else {
+						productProperties.setAir_preferred_host((byte) (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).testConnection(productProperties.getAir_test_connection_msisdn(), productProperties.getAir_preferred_host()));
+						throw new AirAvailabilityException();
+					}
 				}
 			}
 		}

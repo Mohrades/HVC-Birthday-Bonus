@@ -11,11 +11,11 @@ import dao.DAO;
 import dao.mapping.HVConsumerRowMapper;
 import domain.models.HVConsumer;
 
-public class HVConsumersDAOJdbc {
+public class HVConsumerDAOJdbc {
 
 	private DAO dao;
 
-	public HVConsumersDAOJdbc(DAO dao) {
+	public HVConsumerDAOJdbc(DAO dao) {
 		this.dao = dao;
 	}
 

@@ -49,44 +49,14 @@ public class DefaultBonusProcessor implements ItemProcessor<HVConsumer, HVConsum
 				return hvc;
 			}
 
-			/*Date expires = new Date();
-			expires.setDate(expires.getDate() + 1);
-			expires.setSeconds(59);expires.setMinutes(59);expires.setHours(23);
-			// set bonus expiry date
-			hvc.setBonus_expires_in(expires);
-
-			if(new HVCDAOJdbc(dao).saveOneHVC(hvc) > 0) {
-				HashSet<BalanceAndDate> balances = new HashSet<BalanceAndDate>();
-				if(da == 0) balances.add(new BalanceAndDate(da, voice_volume, expires));
-				else balances.add(new DedicatedAccount(da, voice_volume, expires));
-
-				// update Anumber Balance
-				if(new AIRRequest().updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA")) {
-					// update Anumber Offer
-					if(new AIRRequest().updateOffer(hvc.getValue(), offer, null, expires, null, "eBA")) {
-						return hvc;
-					}
-					// rollback
-					else {
-						balances.clear();
-						if(da == 0) balances.add(new BalanceAndDate(da, -voice_volume, null));
-						else balances.add(new DedicatedAccount(da, -voice_volume, null));
-
-						if(new AIRRequest().updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA"));
-						else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-					}
-				}
-				// rollback
-				else {
-					new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-				}
-			}*/
-
 		} catch(AirAvailabilityException ex) {
 			throw ex;
 			
+		} catch(Exception ex) {
+			if(ex instanceof AirAvailabilityException) throw ex;
+
 		} catch(Throwable th) {
-			
+			if(th instanceof AirAvailabilityException) throw th;
 		}
 
 		return null;

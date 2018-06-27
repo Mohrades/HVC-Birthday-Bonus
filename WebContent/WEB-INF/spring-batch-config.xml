@@ -12,7 +12,7 @@
 
 	<task:annotation-driven executor="batchTaskExecutor" scheduler="scheduling" exception-handler="myAsyncUncaughtExceptionHandler" />
 
-	<bean id="myAsyncUncaughtExceptionHandler" class="jobs.MyAsyncUncaughtExceptionHandler" />
+	<bean id="myAsyncUncaughtExceptionHandler" class="exceptions.MyAsyncUncaughtExceptionHandler" />
 
 	<!-- By default when specifying @Async on a method, the executor that will be used is the one supplied to the 'annotation-driven' -->
 	<!-- the value attribute of the @Async annotation can be used when needing to indicate that an executor other than the default should be used -->
@@ -28,11 +28,12 @@
 		<!-- java.lang.IllegalArgumentException: Cron expression must consist of 6 fields (found 7 in "0 00 0 1 APR,MAY,JUN ? 2018") -->
 
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
-  		<task:scheduled ref="jobs" method="import_hvcs" cron="0 00 04 ? * *" />
+  		<!-- <task:scheduled ref="jobs" method="import_hvcs" cron="0 00 04 ? * *" /> -->
 
 		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
 
-  		<task:scheduled ref="jobs" method="clear_ussd" fixed-delay="900000" />
+  		<!-- <task:scheduled ref="jobs" method="clear_ussd" fixed-delay="900000" /> -->
+  		<task:scheduled ref="jobs" method="clear_ussd" fixed-delay="720000" />
 
   		<!-- <task:scheduled ref="jobs" method="clear_sharing" cron="0 00 0 1 APR,MAY,JUN ?"  /> -->
   		<task:scheduled ref="jobs" method="setDefaultBonus" cron="00 00 12 ? * *" />
@@ -49,13 +50,31 @@
 
 	<batch:job id="cleanExpiredUssdRequestJob">
 	  <batch:step id="cleanUssdRequest">
-	  	<batch:tasklet ref="cleanExpiredUssdRequestTasklet" transaction-manager="transactionManager" />
+	  	<!-- <batch:tasklet ref="cleanExpiredUssdRequestTasklet" transaction-manager="transactionManager" /> -->
+	  	<batch:tasklet transaction-manager="transactionManager">
+          <bean class="jobs.CleanExpiredUssdRequestTasklet">
+     		<property name="productProperties" ref="productProperties" />
+     		<property name="dao" ref="dao" />
+     	  </bean>
+	  	</batch:tasklet>
 	  </batch:step>
 	</batch:job>
 
 	<batch:job id="importHVConsumersJob">
+	  <batch:listeners>
+      	<!-- <batch:listener>
+          <bean class="jobs.listeners.JobPhaseEventListener" />
+        </batch:listener> -->
+        <batch:listener ref="jobPhaseEventListener" />
+  	  </batch:listeners>
+
 	  <batch:step id="importHVConsumers">
-	  	<batch:tasklet ref="importHVConsumersTasklet" transaction-manager="transactionManager">
+	  	<!-- <batch:tasklet ref="importHVConsumersTasklet" transaction-manager="transactionManager"> -->
+	  	<batch:tasklet transaction-manager="transactionManager">
+          <bean class="jobs.ImportHVConsumersTasklet">
+     		<property name="productProperties" ref="productProperties" />
+     		<property name="dao" ref="dao" />
+     	  </bean>
 		  <!-- Intercepting Step Execution -->
 		  <!-- Just as with the Job, there are many events during the execution of a Step where a user may need to perform some functionality.
 		  This can be accomplished with one of many Step scoped listeners. -->
@@ -119,9 +138,10 @@
 	Remember that jobs are restartable by default. If you’re worried that you’ll forget that, set the restartable flag explicitly on all your jobs. -->
 	<batch:job id="defaultBonusJob">
 	  <batch:listeners>
-      	<batch:listener>
-          <bean class="jobs.listeners.DefaultBonusJobListener" />
-        </batch:listener>
+      	<!-- <batch:listener>
+          <bean class="jobs.listeners.JobPhaseEventListener" />
+        </batch:listener> -->
+        <batch:listener ref="jobPhaseEventListener" />
   	  </batch:listeners>
 
 	  <!-- A single step cannot have both a "next" attribute and a transition element. -->
@@ -203,9 +223,26 @@
 	  </batch:step>
 	</batch:job>
 
+	<!-- Job scope, introduced in Spring Batch 3.0 is similar to Step scope in configuration but is a Scope for the Job context so there is only one instance of such a bean per executing job.
+	Additionally, support is provided for late binding of references accessible from the JobContext using #{..} placeholders. Using this feature, bean properties can be pulled from the job or job execution context and the job parameters. -->
+	<!-- Because it is not part of the Spring container by default, the scope must be added explicitly, either by using the batch namespace:
+	Or by including a bean definition explicitly for the JobScope <bean class="org.springframework.batch.core.scope.JobScope" /> (but not both): -->
+	<bean id="jobPhaseEventListener" class="jobs.listeners.JobPhaseEventListener" scope="job">
+		<property name="productProperties" ref="productProperties" />
+
+    	<!-- <property name="name" value="#{jobParameters[input]}" /> -->
+    	<!-- <property name="name" value="#{jobExecutionContext['input.name']}.txt" /> -->
+	</bean>
+
+	<!-- Using a scope of Step is required in order to use late binding since the bean cannot actually be instantiated until the Step starts, which allows the attributes to be found.
+	Because it is not part of the Spring container by default, the scope must be added explicitly, either by using the batch namespace:
+	or by including a bean definition explicitly for the StepScope <bean class="org.springframework.batch.core.scope.StepScope" /> (but not both): -->
     <bean id="jobRunListener" class="jobs.listeners.JobRunListener" scope="step">
       <property name="dao" ref="dao" />
       <property name="productProperties" ref="productProperties" />
+	  
+      <!-- <property name="resource" value="#{stepExecutionContext['input.file.name']}" />
+      <property name="resource" value="#{jobExecutionContext['input.file.name']}" /> -->
     </bean>
 
 	<!-- Configuring a thread-safe JdbcCursorItemReader with an indicator -->

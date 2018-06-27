@@ -1,4 +1,4 @@
-package jobs;
+package exceptions;
 
 import java.lang.reflect.Method;
 
@@ -6,7 +6,7 @@ import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 
 public class MyAsyncUncaughtExceptionHandler implements AsyncUncaughtExceptionHandler {
 
-	public MyAsyncUncaughtExceptionHandler(){
+	public MyAsyncUncaughtExceptionHandler() {
 
 	}
 
@@ -18,7 +18,7 @@ public class MyAsyncUncaughtExceptionHandler implements AsyncUncaughtExceptionHa
 	}
 
 	private void sendEmail(Throwable ex, Method method) {
-		try{
+		try {
 
 		} catch(Throwable th) {
 
