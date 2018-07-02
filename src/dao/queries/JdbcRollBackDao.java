@@ -11,11 +11,11 @@ import dao.DAO;
 import dao.mapping.RollBackRowMapper;
 import domain.models.RollBack;
 
-public class RollBackDAOJdbc {
+public class JdbcRollBackDao {
 
 	private DAO dao;
 
-	public RollBackDAOJdbc(DAO dao) {
+	public JdbcRollBackDao(DAO dao) {
 		this.dao = dao;
 	}
 

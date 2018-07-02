@@ -10,11 +10,11 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import dao.DAO;
 
-public class BirthDaysDAOJdbc {
+public class JdbcBirthDaysDao {
 
 	private DAO dao;
 
-	public BirthDaysDAOJdbc(DAO dao) {
+	public JdbcBirthDaysDao(DAO dao) {
 		this.dao = dao;
 	}
 

@@ -74,7 +74,16 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 	@Value("#{appConfig['air.preferred.host']}")
 	private byte air_preferred_host;
 
+	@Value("#{appConfig['happy.birthday.bonus.event.listeners.activated']}")
+	private boolean happy_birthday_bonus_event_listeners_activated;
+
 	private List<String> happy_birthday_bonus_event_listeners;
+
+	@Value("#{appConfig['mtnb.irm.database.subscriber.today.filter']}")
+	private String mtnb_irm_database_subscriber_today_filter;
+
+	@Value("#{appConfig['mtnb.irm.database.subscriber.many.days.filter']}")
+	private String mtnb_irm_database_subscriber_many_days_filter;
 
 	@Value("#{appConfig['gsm.mnc']}")
 	public void setMnc(final String gsmmnc) {
@@ -218,6 +227,10 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 		return sms_notifications_header;
 	}
 
+	public boolean isHappy_birthday_bonus_event_listeners_activated() {
+		return happy_birthday_bonus_event_listeners_activated;
+	}
+
 	public List<String> getHappy_birthday_bonus_event_listeners() {
 		return happy_birthday_bonus_event_listeners;
 	}
@@ -268,6 +281,14 @@ public class ProductProperties implements InitializingBean, DisposableBean {
 
 	public List<String> getOffer_id() {
 		return offer_id;
+	}
+
+	public String getMtnb_irm_database_subscriber_today_filter() {
+		return mtnb_irm_database_subscriber_today_filter;
+	}
+
+	public String getMtnb_irm_database_subscriber_many_days_filter() {
+		return mtnb_irm_database_subscriber_many_days_filter;
 	}
 
 	public List<String> getAnumber_serviceClass_include_filter() {

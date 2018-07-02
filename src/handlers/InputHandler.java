@@ -19,9 +19,9 @@ import com.google.common.base.Splitter;
 
 import connexions.AIRRequest;
 import dao.DAO;
-import dao.queries.HVConsumerDAOJdbc;
-import dao.queries.USSDRequestDAOJdbc;
-import dao.queries.USSDServiceDAOJdbc;
+import dao.queries.JdbcHVConsumerDao;
+import dao.queries.JdbcUSSDRequestDao;
+import dao.queries.JdbcUSSDServiceDao;
 import domain.models.HVConsumer;
 import domain.models.USSDRequest;
 import domain.models.USSDService;
@@ -57,12 +57,12 @@ public class InputHandler {
 			}
 
 			long sessionId = Long.parseLong(parameters.get("sessionid"));
-			ussd = new USSDRequestDAOJdbc(dao).getOneUSSD(sessionId, parameters.get("msisdn"));
+			ussd = new JdbcUSSDRequestDao(dao).getOneUSSD(sessionId, parameters.get("msisdn"));
 
 			if(ussd == null) {
 				ussd = new USSDRequest(0, sessionId, parameters.get("msisdn"), parameters.get("input").trim(), 1, null);
 
-				USSDService service = new USSDServiceDAOJdbc(dao).getOneUSSDService(productProperties.getSc());
+				USSDService service = new JdbcUSSDServiceDao(dao).getOneUSSDService(productProperties.getSc());
 				Date now = new Date();
 
 				if((service == null) || (((service.getStart_date() != null) && (now.before(service.getStart_date()))) || ((service.getStop_date() != null) && (now.after(service.getStop_date()))))) {
@@ -72,7 +72,7 @@ public class InputHandler {
 				}
 				else {
 					// check msisdn is alive hvc (yesterday and today)
-					hvc = new HVConsumerDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), -1);
+					hvc = new JdbcHVConsumerDao(dao).getOneHVConsumer(ussd.getMsisdn(), -1);
 
 					if(hvc == null) {
 						modele.put("next", false);
@@ -102,7 +102,7 @@ public class InputHandler {
 			}
 			else {
 				// check msisdn is alive hvc (only today)
-				hvc = new HVConsumerDAOJdbc(dao).getOneHVConsumer(ussd.getMsisdn(), 0);
+				hvc = new JdbcHVConsumerDao(dao).getOneHVConsumer(ussd.getMsisdn(), 0);
 				hvc.setLanguage(language);
 
 				ussd.setStep(ussd.getStep() + 1);
@@ -220,7 +220,7 @@ public class InputHandler {
 
 	public void endStep(DAO dao, USSDRequest ussd, Map<String, Object> modele, ProductProperties productProperties, String messageA, String Anumber, String messageB, String Bnumber, String senderName) {
 		if((ussd != null) && (ussd.getId() > 0)) {
-			new USSDRequestDAOJdbc(dao).deleteOneUSSD(ussd.getId());
+			new JdbcUSSDRequestDao(dao).deleteOneUSSD(ussd.getId());
 		}
 
 		modele.put("next", false);
@@ -251,7 +251,7 @@ public class InputHandler {
 			//
 		}
 
-		new USSDRequestDAOJdbc(dao).saveOneUSSD(ussd);
+		new JdbcUSSDRequestDao(dao).saveOneUSSD(ussd);
 
 		modele.put("next", true);
 		modele.put("message", message);

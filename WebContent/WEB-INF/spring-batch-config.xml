@@ -30,13 +30,13 @@
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
   		<!-- <task:scheduled ref="jobs" method="import_hvcs" cron="0 00 04 ? * *" /> -->
 
-		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
+		<task:scheduled ref="jobs" method="notify_wishes" cron="0 40 14 ? * *" />
 
   		<!-- <task:scheduled ref="jobs" method="clear_ussd" fixed-delay="900000" /> -->
   		<task:scheduled ref="jobs" method="clear_ussd" fixed-delay="720000" />
 
   		<!-- <task:scheduled ref="jobs" method="clear_sharing" cron="0 00 0 1 APR,MAY,JUN ?"  /> -->
-  		<task:scheduled ref="jobs" method="setDefaultBonus" cron="00 00 12 ? * *" />
+  		<task:scheduled ref="jobs" method="setDefaultBonus" cron="00 20 15 ? * *" />
 	</task:scheduled-tasks>
 
     <bean id="transactionManager" class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
@@ -272,6 +272,25 @@
 			</bean>
 	  	</property>
 	</bean>
+
+	<!-- <bean id="reader" class="org.springframework.batch.item.database.JdbcCursorItemReader">
+	  <property name="dataSource" ref="dataSource" />
+
+	  <property name="sql" value="select id from product where update_timestamp &gt; ?" />
+	  Assigns parameter to SQL query
+	  <property name="preparedStatementSetter">
+	    <bean class="org.springframework.jdbc.core.ArgumentPreparedStatementSetter" scope="step">
+	      <constructor-arg value="#{jobParameters['updateTimestampBound']}" />
+	    </bean>
+	  </property>
+
+	  <property name="rowMapper">
+	  	Returns a String for each row
+	    <bean class="org.springframework.jdbc.core.SingleColumnRowMapper">
+	      <constructor-arg value="java.lang.String" />
+	    </bean>
+	  </property>
+	</bean> -->
 
 	<bean id="MultithreadedStepsTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
 	  <property name="corePoolSize" value="03" />

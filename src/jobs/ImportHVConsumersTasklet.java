@@ -20,9 +20,9 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import dao.DAO;
-import dao.queries.BirthDaysDAOJdbc;
-import dao.queries.HVConsumerDAOJdbc;
-import dao.queries.USSDServiceDAOJdbc;
+import dao.queries.JdbcBirthDaysDao;
+import dao.queries.JdbcHVConsumerDao;
+import dao.queries.JdbcUSSDServiceDao;
 import domain.models.HVConsumer;
 import domain.models.USSDService;
 import product.ProductProperties;
@@ -62,7 +62,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 		// TODO Auto-generated method stub
 
 		try {
-			USSDService service = new USSDServiceDAOJdbc(dao).getOneUSSDService(productProperties.getSc());
+			USSDService service = new JdbcUSSDServiceDao(dao).getOneUSSDService(productProperties.getSc());
 			Date now = new Date();
 
 			/*The first way to stop execution is to throw an exception. This works all the time, unless you configured the job to skip some exceptions in a chunk-oriented step!*/
@@ -77,7 +77,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 				chunkContext.getStepContext().getStepExecution().setTerminateOnly();
 				stepContribution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
 			}*/
-			else if((new BirthDaysDAOJdbc(dao)).isBirthDayReported()) {
+			else if((new JdbcBirthDaysDao(dao)).isBirthDayReported()) {
 				// Sets stop flag
 				chunkContext.getStepContext().getStepExecution().setTerminateOnly();
 				stepContribution.setExitStatus(new ExitStatus("STOPPED", "Job should not be run right now."));
@@ -98,17 +98,10 @@ public class ImportHVConsumersTasklet implements Tasklet {
 					connexion.setReadOnly(true); // en mode lecture seule
 
 					// on lit la table MTNB.CRM_CUSTOMER_DATA [MSISDN, LASTNAME, FIRSTNAME, BIRTHDATE, PREFERREDLANGUAGE]
-					// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,BIRTHDATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA WHERE (TO_CHAR(SYSDATE, 'MMDD') = TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'), 'MMDD'))");
-					// ps = connexion.prepareStatement("SELECT COUNT(*) FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM')= TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)) AND (ROWNUM < 100000))");
-					// ps = connexion.prepareStatement("SELECT * FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM')= TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)) AND (ROWNUM < 100000))");
-
-					// Anciens propriétaires d'un MSISDN
-					// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,BIRTHDATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM')= TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME < ANY (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
-					// La mise à jour la plus récente !!
-					List<Map<String, Object>>  reporteds = (new BirthDaysDAOJdbc(dao)).getAllReportedBirthDays();
+					List<Map<String, Object>>  reporteds = (new JdbcBirthDaysDao(dao)).getAllReportedBirthDays();
 
 					if(reporteds.isEmpty()) {
-						ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(SYSDATE,'DDMM') = TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM')) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
+						ps = connexion.prepareStatement(productProperties.getMtnb_irm_database_subscriber_today_filter().trim());
 					}
 					else {
 						SimpleDateFormat dateFormat = new SimpleDateFormat("ddMM");
@@ -131,7 +124,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 							}
 						}
 
-						ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE ((TO_CHAR(TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY'),'DDMM') IN (" + birthdays + ")) AND (Aa.SYS_CREATED_DATE_TIME >= ALL (SELECT B.SYS_CREATED_DATE_TIME FROM MTNB.CRM_CUSTOMER_DATA B WHERE B.MSISDN = Aa.MSISDN)))");
+						ps = connexion.prepareStatement(productProperties.getMtnb_irm_database_subscriber_many_days_filter().trim().replace("<%= VALUE>", birthdays));
 					}
 
 					rs = ps.executeQuery();
@@ -186,7 +179,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE ((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100'))");
 					// ps = connexion.prepareStatement("SELECT MSISDN,UPPER(TRIM(CUSTOMER_SEGMENT)) FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
 					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
-					ps = connexion.prepareStatement(productProperties.getCustomer_segment_filter());
+					ps = connexion.prepareStatement(productProperties.getCustomer_segment_filter().trim());
 					rs = ps.executeQuery();
 					// Liste des elements
 					while (rs.next()) {
@@ -219,9 +212,13 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 				// publishers
 				HashSet <HVConsumer> allMSISDN_Today_Is_BIRTHDATE_COPY = null;
-				List<String> happy_birthday_bonus_event_listeners = productProperties.getHappy_birthday_bonus_event_listeners();
-				if(happy_birthday_bonus_event_listeners != null) {
-					allMSISDN_Today_Is_BIRTHDATE_COPY = new HashSet <HVConsumer>(allMSISDN_Today_Is_BIRTHDATE);
+				List<String> happy_birthday_bonus_event_listeners = null;
+				if(productProperties.isHappy_birthday_bonus_event_listeners_activated()) {
+					happy_birthday_bonus_event_listeners = productProperties.getHappy_birthday_bonus_event_listeners();
+
+					if(happy_birthday_bonus_event_listeners != null) {
+						allMSISDN_Today_Is_BIRTHDATE_COPY = new HashSet <HVConsumer>(allMSISDN_Today_Is_BIRTHDATE);
+					}
 				}
 
 				// croiser today_is_birthday and HVC
@@ -230,7 +227,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 				for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE) {
 					try {
 						// store hvc
-						new HVConsumerDAOJdbc(dao).saveOneHVConsumer(hvc);
+						new JdbcHVConsumerDao(dao).saveOneHVConsumer(hvc);
 
 					} catch(Throwable th) {
 
@@ -238,18 +235,20 @@ public class ImportHVConsumersTasklet implements Tasklet {
 				}
 
 				// publish msisdn as a birthday susbcriber
-				if(happy_birthday_bonus_event_listeners != null) {
-					// croiser today_is_birthday and not HVC
-					allMSISDN_Today_Is_BIRTHDATE_COPY.removeAll(allHVC);
+				if(productProperties.isHappy_birthday_bonus_event_listeners_activated()) {
+					if(happy_birthday_bonus_event_listeners != null) {
+						// croiser today_is_birthday and not HVC
+						allMSISDN_Today_Is_BIRTHDATE_COPY.removeAll(allHVC);
 
-					for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE_COPY) {
-						try {
-							for(String url : happy_birthday_bonus_event_listeners) {
-								if((new HappyBirthDayEventPublisher()).notify(url, hvc.getValue(), hvc.getName(), hvc.getLanguage(), "eBA") == 0) ;
+						for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE_COPY) {
+							try {
+								for(String url : happy_birthday_bonus_event_listeners) {
+									if((new HappyBirthDayEventPublisher()).notify(url, hvc.getValue(), hvc.getName(), hvc.getLanguage(), "eBA") == 0) ;
+								}
+
+							} catch(Throwable th) {
+
 							}
-
-						} catch(Throwable th) {
-
 						}
 					}
 				}

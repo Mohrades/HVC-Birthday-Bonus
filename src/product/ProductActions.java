@@ -5,8 +5,8 @@ import java.util.HashSet;
 
 import connexions.AIRRequest;
 import dao.DAO;
-import dao.queries.HVConsumerDAOJdbc;
-import dao.queries.RollBackDAOJdbc;
+import dao.queries.JdbcHVConsumerDao;
+import dao.queries.JdbcRollBackDao;
 import domain.models.HVConsumer;
 import domain.models.RollBack;
 import exceptions.AirAvailabilityException;
@@ -47,7 +47,7 @@ public class ProductActions {
 			// set bonus expiry date
 			hvc.setBonus_expires_in(expires);
 
-			if(new HVConsumerDAOJdbc(dao).locking(hvc, true) > 0) {
+			if(new JdbcHVConsumerDao(dao).locking(hvc, true) > 0) {
 				responseCode = 1;
 
 				HashSet<BalanceAndDate> balances = new HashSet<BalanceAndDate>();
@@ -70,12 +70,12 @@ public class ProductActions {
 				        // release waiting for the response : set waitingForResponse true
 				        request.setWaitingForResponse(true); request.setSuccessfully(true);
 
-						if(new HVConsumerDAOJdbc(dao).saveOneHVConsumer(hvc) > 0) {
+						if(new JdbcHVConsumerDao(dao).saveOneHVConsumer(hvc) > 0) {
 							responseCode = 0;
 						}
 						else {
 							responseCode = -1;
-							new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 3, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+							new JdbcRollBackDao(dao).saveOneRollBack(new RollBack(0, 3, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
 						}
 					}
 					// rollback
@@ -87,19 +87,19 @@ public class ProductActions {
 
 							if(request.updateBalanceAndDate(hvc.getValue(), balances, "HVC", (hvc.getSegment() + ""), "eBA"));
 							else {
-								if(request.isSuccessfully()) new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-								else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+								if(request.isSuccessfully()) new JdbcRollBackDao(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+								else new JdbcRollBackDao(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
 							}
 						}
 						else {
-							new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -2, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+							new JdbcRollBackDao(dao).saveOneRollBack(new RollBack(0, -2, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
 						}
 					}
 				}
 				// rollback
 				else {
-					if(request.isSuccessfully()) new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
-					else new RollBackDAOJdbc(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+					if(request.isSuccessfully()) new JdbcRollBackDao(dao).saveOneRollBack(new RollBack(0, 1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
+					else new JdbcRollBackDao(dao).saveOneRollBack(new RollBack(0, -1, hvc.getSegment(), hvc.getValue(), hvc.getValue(), null));
 				}
 			}
 
@@ -108,7 +108,7 @@ public class ProductActions {
 		} finally {
 			if(responseCode >= 0) {
 				// unlock
-				(new HVConsumerDAOJdbc(dao)).locking(hvc, false);
+				(new JdbcHVConsumerDao(dao)).locking(hvc, false);
 
 				if(request.isWaitingForResponse()) {
 					if(request.isSuccessfully());
