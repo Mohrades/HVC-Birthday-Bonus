@@ -24,6 +24,7 @@ public class JdbcBirthDaysDao {
 
 	public List<Map<String,Object>> getAllReportedBirthDays() {
 		try {
+			
 			return getJdbcTemplate().queryForList("SELECT BIRTH_DATE FROM HVC_BIRTHDAY_BONUS_DATES_EBA WHERE (REPORTED_TO = '" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "')");
 
 		} catch(EmptyResultDataAccessException empty) {
