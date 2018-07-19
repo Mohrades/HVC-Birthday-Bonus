@@ -188,9 +188,9 @@ public class InputHandler {
 		}
 
 		int offer = Integer.parseInt(productProperties.getOffer_id().get(hvc.getSegment() - 1));
-		HashSet<OfferInformation> offers = (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getOffers(ussd.getMsisdn(), new int[][]{{offer,offer}}, false, null, false);
+		HashSet<OfferInformation> offers = (offer > 0) ? (new AIRRequest(productProperties.getAir_hosts(), productProperties.getAir_io_sleep(), productProperties.getAir_io_timeout(), productProperties.getAir_io_threshold(), productProperties.getAir_preferred_host())).getOffers(ussd.getMsisdn(), new int[][]{{offer,offer}}, false, null, false) : null;
 
-		if((offers == null) || offers.size() == 0) {
+		if((offer > 0) && ((offers == null) || offers.size() == 0)) {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 		}
 		else {

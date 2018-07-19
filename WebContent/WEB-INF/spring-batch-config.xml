@@ -30,13 +30,13 @@
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
   		<!-- <task:scheduled ref="jobs" method="import_hvcs" cron="0 00 04 ? * *" /> -->
 
-		<task:scheduled ref="jobs" method="notify_wishes" cron="0 40 14 ? * *" />
+		<task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" />
 
   		<!-- <task:scheduled ref="jobs" method="clear_ussd" fixed-delay="900000" /> -->
   		<task:scheduled ref="jobs" method="clear_ussd" fixed-delay="720000" />
 
   		<!-- <task:scheduled ref="jobs" method="clear_sharing" cron="0 00 0 1 APR,MAY,JUN ?"  /> -->
-  		<task:scheduled ref="jobs" method="setDefaultBonus" cron="00 20 15 ? * *" />
+  		<task:scheduled ref="jobs" method="setDefaultBonus" cron="00 00 12 ? * *" />
 	</task:scheduled-tasks>
 
     <bean id="transactionManager" class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
@@ -88,6 +88,13 @@
 	<!-- To disable restart, set the attribute restartable to false on the job element:
 	Remember that jobs are restartable by default. If you’re worried that you’ll forget that, set the restartable flag explicitly on all your jobs. -->
 	<batch:job id="happyBirthdayWishesJob">
+	  <batch:listeners>
+      	<!-- <batch:listener>
+          <bean class="jobs.listeners.JobPhaseEventListener" />
+        </batch:listener> -->
+        <batch:listener ref="jobPhaseEventListener" />
+  	  </batch:listeners>
+
 	  <batch:step id="wishesNotificationThroughSms">
 	  	<batch:tasklet>
 	      <!-- <batch:chunk commit-interval="100"> -->
