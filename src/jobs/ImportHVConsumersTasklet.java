@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import domain.models.HVConsumer;
 import domain.models.USSDService;
 import product.ProductProperties;
 import tools.HappyBirthDayEventPublisher;
+import tools.SMPPConnector;
 
 /*@Component("importHVConsumersTasklet")*/
 public class ImportHVConsumersTasklet implements Tasklet {
@@ -88,6 +90,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 				PreparedStatement ps = null;
 				ResultSet rs = null;
 
+				boolean SQLSyntaxErrorException = false;
 				HashSet <HVConsumer> allMSISDN_Today_Is_BIRTHDATE = new HashSet <HVConsumer>();
 
 				try {
@@ -102,6 +105,8 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 					if(reporteds.isEmpty()) {
 						ps = connexion.prepareStatement(productProperties.getMtnb_irm_database_subscriber_today_filter().trim());
+						// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE MSISDN IN ('61437076', '96632261', '62078590', '69076742')");
+						// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE MSISDN IN ('69076742')");
 					}
 					else {
 						SimpleDateFormat dateFormat = new SimpleDateFormat("ddMM");
@@ -151,7 +156,13 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 					connexion.commit(); // commit transaction
 
+				} catch (SQLSyntaxErrorException ex) {
+					// on traite l'exception : ORA-00942: table or view does not exist
+					SQLSyntaxErrorException = true;
 				} catch (ClassNotFoundException|SQLException ex) {
+					// on traite l'exception
+					SQLSyntaxErrorException = true;
+				} catch (Throwable th) {
 					// on traite l'exception
 
 				} finally {
@@ -162,8 +173,23 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 						} catch (SQLException ex) {
 							// traiter l'exception
+						} catch (Throwable th) {
+							// traiter l'exception
 						}
 					}
+
+					if(allMSISDN_Today_Is_BIRTHDATE.isEmpty()) {
+						stepContribution.setExitStatus(ExitStatus.COMPLETED);
+						return RepeatStatus.FINISHED;
+					}
+				}
+
+				if(SQLSyntaxErrorException) {
+					String log = (new SimpleDateFormat("MMM dd', 'yyyy HH:mm:ss' '")).format(new Date()).toUpperCase() + "ImportHVConsumersTasklet failed with the following status: [SQLSyntaxErrorException]";
+					new SMPPConnector().submitSm("APP SERV", productProperties.getAir_test_connection_msisdn(), log);
+
+					stepContribution.setExitStatus(ExitStatus.FAILED);
+					return RepeatStatus.FINISHED;
 				}
 
 				HashSet <HVConsumer> allHVC = new HashSet <HVConsumer>();
@@ -195,9 +221,14 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 					connexion.commit(); // commit transaction
 
+				} catch (SQLSyntaxErrorException ex) {
+					// on traite l'exception : ORA-00942: table or view does not exist
+					SQLSyntaxErrorException = true;
 				} catch (ClassNotFoundException|SQLException ex) {
 					// on traite l'exception
-
+					SQLSyntaxErrorException = true;
+				} catch (Throwable th) {
+					// on traite l'exception
 				} finally {
 					// fermer la connexion
 					if (connexion != null) {
@@ -208,6 +239,14 @@ public class ImportHVConsumersTasklet implements Tasklet {
 							// traiter l'exception
 						}
 					}
+				}
+
+				if(SQLSyntaxErrorException) {
+					String log = (new SimpleDateFormat("MMM dd', 'yyyy HH:mm:ss' '")).format(new Date()).toUpperCase() + "ImportHVConsumersTasklet failed with the following status: [SQLSyntaxErrorException]";
+					new SMPPConnector().submitSm("APP SERV", productProperties.getAir_test_connection_msisdn(), log);
+
+					stepContribution.setExitStatus(ExitStatus.FAILED);
+					return RepeatStatus.FINISHED;
 				}
 
 				// publishers

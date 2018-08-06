@@ -67,7 +67,7 @@ public class JobRunListener implements StepExecutionListener {
 			String stepName = "Step=[" + StepExecutionDescription.substring(StepExecutionDescription.indexOf("name=") + 5, StepExecutionDescription.indexOf(", status=", StepExecutionDescription.indexOf("name="))).trim() + "]";
 			String stepStatus = StepExecutionDescription.substring(StepExecutionDescription.indexOf("status="), StepExecutionDescription.indexOf(", readCount", StepExecutionDescription.indexOf("status="))).trim();
 
-			String log = (new SimpleDateFormat("MMM dd', 'yyyy HH:mm:ss' '")).format(stepExecution.getEndTime()).toUpperCase() + stepName + " completed with the following status: [" + stepStatus + "]";
+			String log = (new SimpleDateFormat("MMM dd', 'yyyy HH:mm:ss' '")).format((stepExecution.getEndTime() == null) ? new Date() : stepExecution.getEndTime()).toUpperCase() + stepName + " completed with the following status: [" + stepStatus + "]";
 
 			if (exitCode.equals(ExitStatus.STOPPED.getExitCode())) ;
 			else new SMPPConnector().submitSm("APP SERV", productProperties.getAir_test_connection_msisdn(), log);
@@ -108,8 +108,8 @@ public class JobRunListener implements StepExecutionListener {
 			Not dealing with stopping a job in item readers, processors, and writers is a good thing. These components should focus on their processing to enforce separation of concerns.*/
 	        // listeners will still work, but any other step logic (reader, processor, writer) will not happen
 
-			Date now = new Date();
-			now = stepExecution.getStartTime();
+			Date now = stepExecution.getStartTime();
+			if(now == null) now = new Date();
 			USSDService service = new JdbcUSSDServiceDao(dao).getOneUSSDService(productProperties.getSc());
 
 			// Stopping a job from a tasklet : Setting the stop flag in a tasklet is straightforward;

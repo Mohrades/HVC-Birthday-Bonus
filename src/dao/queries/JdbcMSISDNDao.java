@@ -3,6 +3,7 @@ package dao.queries;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,7 +46,7 @@ public class JdbcMSISDNDao {
 	}
 
 	public MSISDN getOneMSISDN(String msisdn, String tableName) {
-		List<MSISDN> staffs = getJdbcTemplate().query("SELECT ID,MSISDN FROM " + tableName + " WHERE ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "') AND (MSISDN = '" + msisdn + "'))", new MSISDNRowMapper());
+		List<MSISDN> staffs = getJdbcTemplate().query("SELECT ID,MSISDN FROM " + tableName + " WHERE ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH)).format(new Date()) + "') AND (MSISDN = '" + msisdn + "'))", new MSISDNRowMapper());
 		return staffs.isEmpty() ? null : staffs.get(0);
 	}
 
@@ -54,7 +55,7 @@ public class JdbcMSISDNDao {
 	}
 
 	public void deleteOneMSISDN(String msisdn, String tableName) {
-		getJdbcTemplate().update("DELETE FROM " + tableName + " WHERE ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy")).format(new Date()) + "') AND (MSISDN = '" + msisdn + "'))");
+		getJdbcTemplate().update("DELETE FROM " + tableName + " WHERE ((BIRTH_DATE = '" + (new SimpleDateFormat("dd-MMM-yy", Locale.ENGLISH)).format(new Date()) + "') AND (MSISDN = '" + msisdn + "'))");
 	}
 
 }
