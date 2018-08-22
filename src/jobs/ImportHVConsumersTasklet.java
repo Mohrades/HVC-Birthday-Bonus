@@ -197,6 +197,9 @@ public class ImportHVConsumersTasklet implements Tasklet {
 					Logger logger = LogManager.getLogger("logging.log4j.DataAvailabilityLogger");
 					logger.error("HOST = ga-exa-scan.mtn.bj,   PORT = 1521,   DATABASE = isldg,   SQLSyntaxErrorException = " + SQLQuery);
 
+					logger = LogManager.getLogger("logging.log4j.JobExecutionLogger");
+					logger.log(Level.INFO, "HOST = ga-exa-scan.mtn.bj,   PORT = 1521,   DATABASE = isldg,   SQLSyntaxErrorException = " + SQLQuery + ",   JobExecution = ImportHVConsumersTasklet failed with the following status: [SQLSyntaxErrorException]");
+
 					stepContribution.setExitStatus(ExitStatus.FAILED);
 					return RepeatStatus.FINISHED;
 				}
@@ -258,6 +261,9 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 						Logger logger = LogManager.getLogger("logging.log4j.DataAvailabilityLogger");
 						logger.log(Level.ERROR, "HOST = ga-exa-scan.mtn.bj,   PORT = 1521,   DATABASE = vmdg,   SQLSyntaxErrorException = " + SQLQuery);
+
+						logger = LogManager.getLogger("logging.log4j.JobExecutionLogger");
+						logger.log(Level.INFO, "HOST = ga-exa-scan.mtn.bj,   PORT = 1521,   DATABASE = vmdg,   SQLSyntaxErrorException = " + SQLQuery + ",   JobExecution = ImportHVConsumersTasklet failed with the following status: [SQLSyntaxErrorException]");
 
 						stepContribution.setExitStatus(ExitStatus.FAILED);
 						return RepeatStatus.FINISHED;
