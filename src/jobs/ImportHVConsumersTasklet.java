@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -92,6 +95,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 
 				boolean SQLSyntaxErrorException = false;
 				HashSet <HVConsumer> allMSISDN_Today_Is_BIRTHDATE = new HashSet <HVConsumer>();
+				String SQLQuery = null;
 
 				try {
 					Class.forName("oracle.jdbc.driver.OracleDriver"); // chargement du pilote JDBC
@@ -104,6 +108,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 					List<Map<String, Object>>  reporteds = (new JdbcBirthDaysDao(dao)).getAllReportedBirthDays();
 
 					if(reporteds.isEmpty()) {
+						SQLQuery = productProperties.getMtnb_irm_database_subscriber_today_filter().trim();
 						ps = connexion.prepareStatement(productProperties.getMtnb_irm_database_subscriber_today_filter().trim());
 						// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE MSISDN IN ('61437076', '96632261', '62078590', '69076742')");
 						// ps = connexion.prepareStatement("SELECT MSISDN,LASTNAME,FIRSTNAME,TO_DATE(BIRTHDATE,'DY MON DD HH24:MI:SS YYYY') BIRTH_DATE,PREFERREDLANGUAGE FROM MTNB.CRM_CUSTOMER_DATA Aa WHERE MSISDN IN ('69076742')");
@@ -129,6 +134,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 							}
 						}
 
+						SQLQuery = productProperties.getMtnb_irm_database_subscriber_many_days_filter().trim().replace("<%= VALUE>", birthdays);
 						ps = connexion.prepareStatement(productProperties.getMtnb_irm_database_subscriber_many_days_filter().trim().replace("<%= VALUE>", birthdays));
 					}
 
@@ -188,112 +194,123 @@ public class ImportHVConsumersTasklet implements Tasklet {
 					String log = (new SimpleDateFormat("MMM dd', 'yyyy HH:mm:ss' '")).format(new Date()).toUpperCase() + "ImportHVConsumersTasklet failed with the following status: [SQLSyntaxErrorException]";
 					new SMPPConnector().submitSm("APP SERV", productProperties.getAir_test_connection_msisdn(), log);
 
+					Logger logger = LogManager.getLogger("logging.log4j.DataAvailabilityLogger");
+					logger.error("HOST = ga-exa-scan.mtn.bj,   PORT = 1521,   DATABASE = isldg,   SQLSyntaxErrorException = " + SQLQuery);
+
 					stepContribution.setExitStatus(ExitStatus.FAILED);
 					return RepeatStatus.FINISHED;
 				}
+				else {
 
-				HashSet <HVConsumer> allHVC = new HashSet <HVConsumer>();
+					HashSet <HVConsumer> allHVC = new HashSet <HVConsumer>();
 
-				try {
-					Class.forName("oracle.jdbc.driver.OracleDriver"); // chargement du pilote JDBC
-					connexion = DriverManager.getConnection("jdbc:oracle:thin:@ga-exa-scan.mtn.bj:1521/vmdg", "abutu", "kT60#bTh03#18"); // ouverture connexion
-					connexion.setAutoCommit(false); // début transaction
-					connexion.setReadOnly(true); // en mode lecture seule
+					try {
+						Class.forName("oracle.jdbc.driver.OracleDriver"); // chargement du pilote JDBC
+						connexion = DriverManager.getConnection("jdbc:oracle:thin:@ga-exa-scan.mtn.bj:1521/vmdg", "abutu", "kT60#bTh03#18"); // ouverture connexion
+						connexion.setAutoCommit(false); // début transaction
+						connexion.setReadOnly(true); // en mode lecture seule
 
-					// on lit la table PRICEPLAN.VALUE_BAND_LIST [MSISDN, CUSTOMER_SEGMENT]
-					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE (((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100')) AND (ROWNUM < 10000))");
-					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE ((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100'))");
-					// ps = connexion.prepareStatement("SELECT MSISDN,UPPER(TRIM(CUSTOMER_SEGMENT)) FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
-					// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
-					ps = connexion.prepareStatement(productProperties.getCustomer_segment_filter().trim());
-					rs = ps.executeQuery();
-					// Liste des elements
-					while (rs.next()) {
-						String msisdn = rs.getString("MSISDN").trim();
+						// on lit la table PRICEPLAN.VALUE_BAND_LIST [MSISDN, CUSTOMER_SEGMENT]
+						// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE (((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100')) AND (ROWNUM < 10000))");
+						// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE ((CUSTOMER_SEGMENT = 'GOLD_P100') OR (CUSTOMER_SEGMENT = 'PREMIUM_P100') OR (CUSTOMER_SEGMENT = 'PLATINUM_P100') OR (CUSTOMER_SEGMENT = 'DIAMOND_P100'))");
+						// ps = connexion.prepareStatement("SELECT MSISDN,UPPER(TRIM(CUSTOMER_SEGMENT)) FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
+						// ps = connexion.prepareStatement("SELECT MSISDN,CUSTOMER_SEGMENT FROM PRICEPLAN.VALUE_BAND_LIST WHERE " + productProperties.getCustomer_segment_filter());
+						SQLQuery = productProperties.getCustomer_segment_filter().trim();
+						ps = connexion.prepareStatement(productProperties.getCustomer_segment_filter().trim());
+						rs = ps.executeQuery();
+						// Liste des elements
+						while (rs.next()) {
+							String msisdn = rs.getString("MSISDN").trim();
 
-						String CUSTOMER_SEGMENT = rs.getString("CUSTOMER_SEGMENT").trim();
-						CUSTOMER_SEGMENT = CUSTOMER_SEGMENT.toUpperCase();
+							String CUSTOMER_SEGMENT = rs.getString("CUSTOMER_SEGMENT").trim();
+							CUSTOMER_SEGMENT = CUSTOMER_SEGMENT.toUpperCase();
 
-						int segment = productProperties.getCustomer_segment_list().contains(CUSTOMER_SEGMENT) ? (productProperties.getCustomer_segment_list().indexOf(CUSTOMER_SEGMENT) + 1) : 0;
-						// allHVC.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, null, CUSTOMER_SEGMENT.equalsIgnoreCase("BRONZE_P100") ? 1 : CUSTOMER_SEGMENT.equalsIgnoreCase("SILVER_P100") ? 2 : CUSTOMER_SEGMENT.equalsIgnoreCase("GOLD_P100") ? 3 : CUSTOMER_SEGMENT.equalsIgnoreCase("PREMIUM_P100") ? 4 : CUSTOMER_SEGMENT.equalsIgnoreCase("PLATINUM_P100") ? 5 : CUSTOMER_SEGMENT.equalsIgnoreCase("DIAMOND_P100") ? 6 : CUSTOMER_SEGMENT.equalsIgnoreCase("IVOIRE_P100") ? 7 : CUSTOMER_SEGMENT.equalsIgnoreCase("GOLD_P100") ? 8 : 0, 0, null));
-						allHVC.add(new HVConsumer(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, null, segment, 0, null));
-					}
+							int segment = productProperties.getCustomer_segment_list().contains(CUSTOMER_SEGMENT) ? (productProperties.getCustomer_segment_list().indexOf(CUSTOMER_SEGMENT) + 1) : 0;
+							// allHVC.add(new HVC(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, null, CUSTOMER_SEGMENT.equalsIgnoreCase("BRONZE_P100") ? 1 : CUSTOMER_SEGMENT.equalsIgnoreCase("SILVER_P100") ? 2 : CUSTOMER_SEGMENT.equalsIgnoreCase("GOLD_P100") ? 3 : CUSTOMER_SEGMENT.equalsIgnoreCase("PREMIUM_P100") ? 4 : CUSTOMER_SEGMENT.equalsIgnoreCase("PLATINUM_P100") ? 5 : CUSTOMER_SEGMENT.equalsIgnoreCase("DIAMOND_P100") ? 6 : CUSTOMER_SEGMENT.equalsIgnoreCase("IVOIRE_P100") ? 7 : CUSTOMER_SEGMENT.equalsIgnoreCase("GOLD_P100") ? 8 : 0, 0, null));
+							allHVC.add(new HVConsumer(0, (msisdn.length() == productProperties.getMsisdn_length()) ? productProperties.getMcc() + msisdn : msisdn, null, segment, 0, null));
+						}
 
-					connexion.commit(); // commit transaction
+						connexion.commit(); // commit transaction
 
-				} catch (SQLSyntaxErrorException ex) {
-					// on traite l'exception : ORA-00942: table or view does not exist
-					SQLSyntaxErrorException = true;
-				} catch (ClassNotFoundException|SQLException ex) {
-					// on traite l'exception
-					SQLSyntaxErrorException = true;
-				} catch (Throwable th) {
-					// on traite l'exception
-				} finally {
-					// fermer la connexion
-					if (connexion != null) {
-						try {
-							connexion.close();
+					} catch (SQLSyntaxErrorException ex) {
+						// on traite l'exception : ORA-00942: table or view does not exist
+						SQLSyntaxErrorException = true;
+					} catch (ClassNotFoundException|SQLException ex) {
+						// on traite l'exception
+						SQLSyntaxErrorException = true;
+					} catch (Throwable th) {
+						// on traite l'exception
+					} finally {
+						// fermer la connexion
+						if (connexion != null) {
+							try {
+								connexion.close();
 
-						} catch (SQLException ex) {
-							// traiter l'exception
+							} catch (SQLException ex) {
+								// traiter l'exception
+							}
 						}
 					}
-				}
 
-				if(SQLSyntaxErrorException) {
-					String log = (new SimpleDateFormat("MMM dd', 'yyyy HH:mm:ss' '")).format(new Date()).toUpperCase() + "ImportHVConsumersTasklet failed with the following status: [SQLSyntaxErrorException]";
-					new SMPPConnector().submitSm("APP SERV", productProperties.getAir_test_connection_msisdn(), log);
+					if(SQLSyntaxErrorException) {
+						String log = (new SimpleDateFormat("MMM dd', 'yyyy HH:mm:ss' '")).format(new Date()).toUpperCase() + "ImportHVConsumersTasklet failed with the following status: [SQLSyntaxErrorException]";
+						new SMPPConnector().submitSm("APP SERV", productProperties.getAir_test_connection_msisdn(), log);
 
-					stepContribution.setExitStatus(ExitStatus.FAILED);
-					return RepeatStatus.FINISHED;
-				}
+						Logger logger = LogManager.getLogger("logging.log4j.DataAvailabilityLogger");
+						logger.log(Level.ERROR, "HOST = ga-exa-scan.mtn.bj,   PORT = 1521,   DATABASE = vmdg,   SQLSyntaxErrorException = " + SQLQuery);
 
-				// publishers
-				HashSet <HVConsumer> allMSISDN_Today_Is_BIRTHDATE_COPY = null;
-				List<String> happy_birthday_bonus_event_listeners = null;
-				if(productProperties.isHappy_birthday_bonus_event_listeners_activated()) {
-					happy_birthday_bonus_event_listeners = productProperties.getHappy_birthday_bonus_event_listeners();
-
-					if(happy_birthday_bonus_event_listeners != null) {
-						allMSISDN_Today_Is_BIRTHDATE_COPY = new HashSet <HVConsumer>(allMSISDN_Today_Is_BIRTHDATE);
+						stepContribution.setExitStatus(ExitStatus.FAILED);
+						return RepeatStatus.FINISHED;
 					}
-				}
+					else {
 
-				// croiser today_is_birthday and HVC
-				allMSISDN_Today_Is_BIRTHDATE.retainAll(allHVC);
+						// publishers
+						HashSet <HVConsumer> allMSISDN_Today_Is_BIRTHDATE_COPY = null;
+						List<String> happy_birthday_bonus_event_listeners = null;
+						if(productProperties.isHappy_birthday_bonus_event_listeners_activated()) {
+							happy_birthday_bonus_event_listeners = productProperties.getHappy_birthday_bonus_event_listeners();
 
-				for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE) {
-					try {
-						// store hvc
-						new JdbcHVConsumerDao(dao).saveOneHVConsumer(hvc);
+							if(happy_birthday_bonus_event_listeners != null) {
+								allMSISDN_Today_Is_BIRTHDATE_COPY = new HashSet <HVConsumer>(allMSISDN_Today_Is_BIRTHDATE);
+							}
+						}
 
-					} catch(Throwable th) {
+						// croiser today_is_birthday and HVC
+						allMSISDN_Today_Is_BIRTHDATE.retainAll(allHVC);
 
-					}
-				}
-
-				// publish msisdn as a birthday susbcriber
-				if(productProperties.isHappy_birthday_bonus_event_listeners_activated()) {
-					if(happy_birthday_bonus_event_listeners != null) {
-						// croiser today_is_birthday and not HVC
-						allMSISDN_Today_Is_BIRTHDATE_COPY.removeAll(allHVC);
-
-						for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE_COPY) {
+						for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE) {
 							try {
-								for(String url : happy_birthday_bonus_event_listeners) {
-									if((new HappyBirthDayEventPublisher()).notify(url, hvc.getValue(), hvc.getName(), hvc.getLanguage(), "eBA") == 0) ;
-								}
+								// store hvc
+								new JdbcHVConsumerDao(dao).saveOneHVConsumer(hvc);
 
 							} catch(Throwable th) {
 
 							}
 						}
+
+						// publish msisdn as a birthday susbcriber
+						if(productProperties.isHappy_birthday_bonus_event_listeners_activated()) {
+							if(happy_birthday_bonus_event_listeners != null) {
+								// croiser today_is_birthday and not HVC
+								allMSISDN_Today_Is_BIRTHDATE_COPY.removeAll(allHVC);
+
+								for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE_COPY) {
+									try {
+										for(String url : happy_birthday_bonus_event_listeners) {
+											if((new HappyBirthDayEventPublisher()).notify(url, hvc.getValue(), hvc.getName(), hvc.getLanguage(), "eBA") == 0) ;
+										}
+
+									} catch(Throwable th) {
+
+									}
+								}
+							}
+						}
+
+						stepContribution.setExitStatus(ExitStatus.COMPLETED);
+						return RepeatStatus.FINISHED;
 					}
 				}
-
-				stepContribution.setExitStatus(ExitStatus.COMPLETED);
-				return RepeatStatus.FINISHED;
 			}
 
 		} catch(Throwable th) {

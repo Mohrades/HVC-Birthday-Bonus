@@ -29,7 +29,7 @@
 
 		<!-- <task:scheduled ref="jobs" method="run_database_maintenance" cron="0 30 01 ? * *"  /> -->
   		<!-- <task:scheduled ref="jobs" method="import_hvcs" cron="0 00 04 ? * *" /> -->
-  		<!-- <task:scheduled ref="jobs" method="import_hvcs" cron="0 04/12 * ? * *" /> -->
+  		<task:scheduled ref="jobs" method="import_hvcs" cron="0 04/12 * ? * *" />
 
 		<!-- <task:scheduled ref="jobs" method="notify_wishes" cron="0 00 08 ? * *" /> -->
 		<task:scheduled ref="jobs" method="notify_wishes" cron="0 2/12 * ? * *" />
