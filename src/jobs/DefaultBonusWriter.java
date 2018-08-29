@@ -8,10 +8,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.MessageSource;
+
+import com.tools.SMPPConnector;
+
 import connexions.AIRRequest;
 import domain.models.HVConsumer;
 import product.ProductProperties;
-import tools.SMPPConnector;
 import util.AccountDetails;
 
 public class DefaultBonusWriter implements ItemWriter<HVConsumer> {

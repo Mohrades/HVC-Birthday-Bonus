@@ -1,4 +1,4 @@
-package tools;
+package com.tools;
 
 import javax.mail.internet.*;
 import javax.mail.*;
@@ -7,7 +7,8 @@ import java.util.*;
 /**
  * Classe permettant d'envoyer un mail.
  */
-public class TestMail {
+public class SendMail {
+
   private final static String MAILER_VERSION = "Java";
 
   public static boolean envoyerMailSMTP(String serveur, int port, boolean debug) {
@@ -177,7 +178,7 @@ public class TestMail {
   */
   public static void main(String[] args) {
     // TestMail.envoyerMailSMTP("10.10.50.8", true);
-    TestMail.envoyerMailSMTP("serflex.o2switch.net", 465, true); // ssl enable
+    SendMail.envoyerMailSMTP("serflex.o2switch.net", 465, true); // ssl enable
     // TestMail.envoyerMailSMTP("mail.ebusinessafrique.com", 26, true); // ssl enable
   }
 }

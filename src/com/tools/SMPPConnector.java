@@ -1,4 +1,4 @@
-package tools;
+package com.tools;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,19 +15,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
-public class HappyBirthDayEventPublisher {
+public class SMPPConnector {
 
-	public HappyBirthDayEventPublisher() {
+	public SMPPConnector() {
 
 	}
 
-	public int notify(String publisherUrl, String msisdn, String name, int language, String originOperatorID) {
+	public void submitSm(String senderName, String subscriber, String message) {
 		// TODO Auto-generated method stub
 		HttpURLConnection http = null;
-		int statusCode = -1;
 
 		try {
-			URL url = new URL(publisherUrl + "/api/happyBirthdayEvent/" + msisdn); // Starting with a URL
+			URL url = new URL("http://10.77.73.245:8080/SMPP_Connector/api/smsmt"); // Starting with a URL
 			URLConnection con = url.openConnection(); // convert it to a URLConnection using url.openConnection();
 			http = (HttpURLConnection)con; // we need to cast it to a HttpURLConnection, so we can access its setRequestMethod() method to set our method
 			http.setRequestMethod("POST"); // PUT is another valid option
@@ -35,11 +34,9 @@ public class HappyBirthDayEventPublisher {
 
 			// A normal POST coming from a http form has a well defined format. We need to convert our input to this format
 			Map<String,String> arguments = new HashMap<>();
-			arguments.put("name", name);
-			arguments.put("language", language + "");
-			arguments.put("msisdn", msisdn);
-			arguments.put("authentication", "true");
-			arguments.put("originOperatorID", originOperatorID);
+			arguments.put("source", senderName);
+			arguments.put("destination", subscriber);
+			arguments.put("messageText", message);
 
 			StringJoiner sj = new StringJoiner("&");
 			for(Map.Entry<String,String> entry : arguments.entrySet()) {
@@ -68,17 +65,14 @@ public class HappyBirthDayEventPublisher {
 				StringBuffer response = new StringBuffer();
 
 				while ((inputLine = in.readLine()) != null) {
-					/*if(response.length() == 0) response.append(inputLine);
-					else response.append("\n" + inputLine);*/
-
-					response.append(inputLine);
+					if(response.length() == 0) response.append(inputLine);
+					else response.append("\n" + inputLine);
 				}
 				in.close();
 
-				// print result
+				//print result
 				try {
-					String XMLResponse = response.toString();
-					statusCode = Integer.parseInt(XMLResponse.substring(XMLResponse.indexOf("<statusCode>") + 12, XMLResponse.indexOf("</statusCode>")));
+					// response.toString();
 
 				} catch (NullPointerException|NumberFormatException e) {
 
@@ -97,14 +91,11 @@ public class HappyBirthDayEventPublisher {
 			try {
 				http.disconnect();
 
-			} catch (Exception e) {
-
+			} catch (Exception e) { 
+				
 			} catch(Throwable th) {
 
 			}
 		}
-
-		return statusCode;
 	}
-
 }

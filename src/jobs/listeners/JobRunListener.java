@@ -9,6 +9,9 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
+
+import com.tools.SMPPConnector;
+
 import dao.DAO;
 import dao.queries.JdbcBirthDaysDao;
 import dao.queries.JdbcScheduledTaskDao;
@@ -16,7 +19,6 @@ import dao.queries.JdbcUSSDServiceDao;
 import domain.models.ScheduledTask;
 import domain.models.USSDService;
 import product.ProductProperties;
-import tools.SMPPConnector;
 
 public class JobRunListener implements StepExecutionListener {
 

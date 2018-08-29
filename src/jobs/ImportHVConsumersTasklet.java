@@ -23,6 +23,10 @@ import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
+
+import com.tools.HappyBirthDayEventPublisher;
+import com.tools.SMPPConnector;
+
 import dao.DAO;
 import dao.queries.JdbcBirthDaysDao;
 import dao.queries.JdbcHVConsumerDao;
@@ -30,8 +34,6 @@ import dao.queries.JdbcUSSDServiceDao;
 import domain.models.HVConsumer;
 import domain.models.USSDService;
 import product.ProductProperties;
-import tools.HappyBirthDayEventPublisher;
-import tools.SMPPConnector;
 
 /*@Component("importHVConsumersTasklet")*/
 public class ImportHVConsumersTasklet implements Tasklet {
@@ -67,6 +69,11 @@ public class ImportHVConsumersTasklet implements Tasklet {
 		// TODO Auto-generated method stub
 
 		try {
+			/*Although Spring Batch stores the job parameters in an instance of the JobParameter class, when you 
+			obtain the parameters this way getJobParameters() returns a Map<String, Object>. Because of this, the cast is required.*/
+			// String param = (String) chunkContext.getStepContext().getJobParameters().get("paramName");
+
+
 			USSDService service = new JdbcUSSDServiceDao(dao).getOneUSSDService(productProperties.getSc());
 			Date now = new Date();
 

@@ -207,6 +207,31 @@
 		  This can be accomplished with one of many Step scoped listeners. -->
     	  <batch:listeners>
     	    <batch:listener ref="jobRunListener" />
+
+			<!-- Configuring the CustomerItemListener. It is useful when Logging Invalid Records as an example -->
+    	    <!-- Logging Invalid Records -->
+    	    <!-- While skipping problematic records is a useful tool, by itself it can raise an issue. In some scenarios, the 
+			ability to skip a record is okay. Say you are mining data and come across something you can’t resolve; it’s 
+			probably okay to skip it. However, when you get into situations where money is involved, say when 
+			processing transactions, just skipping a record probably will not be a robust enough solution. In cases 
+			like these, it is helpful to be able to log the record that was the cause of the error. In this section, you will 
+			look at using an ItemListener to record records that were invalid.  
+
+			 <batch:skippable-exception-classes>
+            	<batch:exclude class="java.lang.Exception" />
+         	</batch:skippable-exception-classes>
+
+			If you use the fixed length record job as an example and execute it with a file that contains an input 
+			record longer than 63 characters (FlatFileItemReader example with a threshold FixedLengthTokenizer), an exception (FlatFileParseException) will be thrown. However, since you have configured your 
+			job to skip all exceptions that extend Exception, the exception will not affect your job’s results, yet your 
+			customerItemLogger will be called and log the item as required. -->
+      		<batch:listener>
+      			<!-- <bean id="customerItemLogger" class="jobs.listeners.HVConsumerItemListener" scope="step"> -->
+      			<bean id="customerItemLogger" class="jobs.listeners.HVConsumerItemListener">
+      				<property name="dao" ref="dao" />
+      				<property name="productProperties" ref="productProperties" />
+      			</bean>
+      		</batch:listener>
     	  </batch:listeners>
 	    </batch:tasklet>
 
@@ -240,7 +265,7 @@
 	<bean id="jobPhaseEventListener" class="jobs.listeners.JobPhaseEventListener" scope="job">
 		<property name="productProperties" ref="productProperties" />
 
-    	<!-- <property name="name" value="#{jobParameters[input]}" /> -->
+    	<!-- <property name="name" value="#{jobParameters['input']}" /> -->
     	<!-- <property name="name" value="#{jobExecutionContext['input.name']}.txt" /> -->
 	</bean>
 
