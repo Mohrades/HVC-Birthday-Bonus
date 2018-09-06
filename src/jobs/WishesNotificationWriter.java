@@ -63,7 +63,7 @@ public class WishesNotificationWriter implements ItemWriter<HVConsumer> {
 
 					} catch(Throwable th) {
 
-					}					
+					}
 				}
 			}
 
