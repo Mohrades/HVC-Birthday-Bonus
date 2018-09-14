@@ -22,7 +22,7 @@ public class Log4jInitServlet extends HttpServlet {
     	String cheminWebApp = getServletContext().getRealPath("/");
         String cheminLogConfig = (cheminWebApp + getInitParameter("log4j-config-location")).replace("\\", File.separator).replace("/", File.separator);
         String cheminLog = (cheminWebApp + getInitParameter("log4j-output-log")).replace("\\", File.separator).replace("/", File.separator);
-        // File logPathDir = new File( cheminLog );
+        // File logPathDir = new File(cheminLog);
 
         // définir une variable d'environnement qui sera utilisée par Log4J dans son fichier de configuration pour établir le
         // chemin du fichier journal utilisé
