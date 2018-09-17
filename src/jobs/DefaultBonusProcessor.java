@@ -67,10 +67,10 @@ public class DefaultBonusProcessor implements ItemProcessor<HVConsumer, HVConsum
 			throw ex;
 			
 		} catch(Exception ex) {
-			if(ex instanceof AirAvailabilityException) throw ex;
+			if(ex instanceof AirAvailabilityException) throw (AirAvailabilityException)ex;
 
 		} catch(Throwable th) {
-			if(th instanceof AirAvailabilityException) throw th;
+			if(th instanceof AirAvailabilityException) throw (AirAvailabilityException)th;
 		}
 
 		return null;
