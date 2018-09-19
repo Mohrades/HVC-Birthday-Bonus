@@ -212,13 +212,13 @@ public class InputHandler {
 						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {new Formatter().format("%.2f", ((double)volume/1024)), (hvc.getLanguage() == 2) ? "GB" : "Go", (hvc.getLanguage() == 2) ? (new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm")).format(balance.getExpiryDate()) : (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 					}
 					else {
-						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {volume, (hvc.getLanguage() == 2) ? "MB" : "Mo", (hvc.getLanguage() == 2) ? (new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm")).format(balance.getExpiryDate()) : (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
+						endStep(dao, ussd, modele, productProperties, i18n.getMessage("data.status", new Object [] {(volume + ""), (hvc.getLanguage() == 2) ? "MB" : "Mo", (hvc.getLanguage() == 2) ? (new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm")).format(balance.getExpiryDate()) : (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 					}
 				}
 				else {
 					long volume = (long) (((double)balance.getAccountValue()) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
 					volume = volume/100;
-					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {volume/60, volume%60, (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);					
+					endStep(dao, ussd, modele, productProperties, i18n.getMessage("voice.status", new Object [] {((volume/60) + ""), ((volume%60) + ""), (new SimpleDateFormat("dd/MM/yyyy 'a' HH:mm")).format(balance.getExpiryDate())}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);					
 				}
 			}
 		}

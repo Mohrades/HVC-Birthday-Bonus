@@ -251,16 +251,16 @@ public class USSDFlow {
 					long volume_data = (long) (((double)Long.parseLong(productProperties.getData_volume().get(hvc.getSegment() - 1))) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
 
 					if(volume_data >= 1024) {
-						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume_voice/(60*100), new Formatter().format("%.2f", ((double)volume_data)/1024), (hvc.getLanguage() == 2) ? "GB" : "Go"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
+						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {((volume_voice/(60*100)) + ""), new Formatter().format("%.2f", ((double)volume_data)/1024), (hvc.getLanguage() == 2) ? "GB" : "Go"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 					else {
-						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume_voice/(60*100), volume_data, (hvc.getLanguage() == 2) ? "MB" : "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
+						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {((volume_voice/(60*100)) + ""), (volume_data + ""), (hvc.getLanguage() == 2) ? "MB" : "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 				}
 				else if(transitions.equalsIgnoreCase(".1")) {
 					long volume = (long) (((double)Long.parseLong(productProperties.getVoice_volume().get(hvc.getSegment() - 1))) / (Double.parseDouble(productProperties.getVoice_volume_rate().get(hvc.getSegment() - 1))));
 
-					modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume/(60*100)}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
+					modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {((volume/(60*100)) + "")}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 				}
 				else if(transitions.equalsIgnoreCase(".2")) {
 					long volume = (long) (((double)Long.parseLong(productProperties.getData_volume().get(hvc.getSegment() - 1))) / ((Double.parseDouble(productProperties.getData_volume_rate().get(hvc.getSegment() - 1)))*1024*1024*100));
@@ -269,7 +269,7 @@ public class USSDFlow {
 						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {new Formatter().format("%.2f", ((double)volume)/1024), (hvc.getLanguage() == 2) ? "GB": "Go"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 					else {
-						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {volume, (hvc.getLanguage() == 2) ? "MB" : "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
+						modele.put("message", i18n.getMessage("menu" + transitions, new Object [] {(volume + ""), (hvc.getLanguage() == 2) ? "MB" : "Mo"}, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH));
 					}
 				}
 			}

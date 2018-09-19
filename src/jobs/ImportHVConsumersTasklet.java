@@ -65,7 +65,7 @@ public class ImportHVConsumersTasklet implements Tasklet {
 	}
 
 	@Override
-	public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
+	public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception  {
 		// TODO Auto-generated method stub
 
 		try {
@@ -326,8 +326,11 @@ public class ImportHVConsumersTasklet implements Tasklet {
 				}
 			}
 
-		} catch(Throwable th) {
+		}/* catch(Throwable th) {
 
+		}*/
+		catch(Throwable th) {
+			throw th;
 		}
 
 		return null;

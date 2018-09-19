@@ -27,7 +27,7 @@ public class HappyBirthDayEventPublisher {
 		int statusCode = -1;
 
 		try {
-			URL url = new URL(publisherUrl + "/api/happyBirthdayEvent/" + msisdn); // Starting with a URL
+			URL url = publisherUrl.endsWith("/") ? new URL(publisherUrl + msisdn) : new URL(publisherUrl + "/" + msisdn); // Starting with a URL
 			URLConnection con = url.openConnection(); // convert it to a URLConnection using url.openConnection();
 			http = (HttpURLConnection)con; // we need to cast it to a HttpURLConnection, so we can access its setRequestMethod() method to set our method
 			http.setRequestMethod("POST"); // PUT is another valid option
