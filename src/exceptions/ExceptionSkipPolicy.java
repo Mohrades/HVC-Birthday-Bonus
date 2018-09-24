@@ -39,7 +39,7 @@ public class ExceptionSkipPolicy implements SkipPolicy {
 					On peut s'assurer qu'un objet est bien une instance d'une classe donnée en recourant à l'opérateur instanceOf.
 					Par exemple, l'expression p instanceOf Point vaudra true si p est (exactement) de type Point.
 					Mais ce test ne reponds pas à nos problématiques ici. Et donc, nous n'utilisons pas cette méthode.
-					
+
 					Les conversions explicites de références:
 					Nous avons largement insisté sur la compatibilité qui existe entre référence à un objet d’un type donné et référence à un objet d'un type ascendant.
 					Comme on peut s'y attendre, la compatibilité n'a pas lieu dans le sens inverse. Considérons cet exemple, fondé sur nos classes Point et Pointcol habituelles :
@@ -59,11 +59,19 @@ public class ExceptionSkipPolicy implements SkipPolicy {
 					pc2 = p ;   // refusé en compilation
 					L'affectation pc2 = p est tout naturellement refusée. Cependant, nous sommes certains que p contient bien ici la référence à un objet de type Pointcol.
 					En fait, nous pouvons forcer le compilateur à réaliser la conversion correspondante en utilisant l'opérateur de cast déjà rencontré pour les types primitifs. Ici, nous écrirons simplement :
-					pc2 = (Pointcol) p ;   // accepté en compilation 
+					pc2 = (Pointcol) p ;   // accepté en compilation
 					Toutefois, lors de l'exécution, Java s'assurera que p contient bien une référence à un objet de type Pointcol (ou dérivé) afin de ne pas compromettre la bonne exécution du programme.
 					Dans le cas contraire, on obtiendra une exception ClassCastException qui, si elle n'est pas traitée, conduira à un arrêt de l'exécution.
 
 					!! CECI EST JUSTE UNE INFORMATION A SE RAPPELER
+
+					 */
+
+					/**
+					 *
+					Determines if the class or interface represented by this Class object is either the same as, or is a superclass or superinterface of, the class or interface represented by the specified Class parameter. It returns true if so; otherwise it returns false.
+					If this Class object represents a primitive type, this method returns true if the specified Class parameter is exactly this Class object; otherwise it returns false.
+					Specifically, this method tests whether the type represented by the specified Class parameter can be converted to the type represented by this Class object via an identity conversion or via a widening reference conversion.
 
 					 */
 					if(exceptionClassToSkip.isAssignableFrom(t.getClass())) {
