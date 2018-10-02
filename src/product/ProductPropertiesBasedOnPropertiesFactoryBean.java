@@ -31,6 +31,9 @@ public class ProductPropertiesBasedOnPropertiesFactoryBean implements ProductPro
 	@Value("#{appConfig['data.da']}")
 	private int data_da;
 
+	@Value("#{appConfig['da.expires_in_days']}")
+	private short da_expires_in_days;
+
 	@Value("#{appConfig['accumulator.id']}")
 	private int accumulator_id;
 
@@ -257,6 +260,10 @@ public class ProductPropertiesBasedOnPropertiesFactoryBean implements ProductPro
 
 	public int getData_da() {
 		return data_da;
+	}
+
+	public short getDa_expires_in_days() {
+		return da_expires_in_days;
 	}
 
 	public List<String> getVoice_volume() {

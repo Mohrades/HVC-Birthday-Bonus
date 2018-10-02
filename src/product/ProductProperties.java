@@ -69,6 +69,8 @@ public interface ProductProperties extends InitializingBean, DisposableBean {
 
 	public int getData_da() ;
 
+	public short getDa_expires_in_days() ;
+
 	public List<String> getVoice_volume() ;
 
 	public List<String> getVoice_volume_rate() ;

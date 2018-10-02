@@ -42,7 +42,7 @@ public class ProductActions {
 
 		try {
 			Date expires = new Date();
-			expires.setDate(expires.getDate() + 1);
+			expires.setDate(expires.getDate() + productProperties.getDa_expires_in_days());
 			expires.setSeconds(59); expires.setMinutes(59); expires.setHours(23);
 			// set bonus expiry date
 			hvc.setBonus_expires_in(expires);
