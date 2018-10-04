@@ -33,6 +33,7 @@ import dao.queries.JdbcHVConsumerDao;
 import dao.queries.JdbcUSSDServiceDao;
 import domain.models.HVConsumer;
 import domain.models.USSDService;
+import filter.MSISDNValidator;
 import product.ProductProperties;
 
 /*@Component("importHVConsumersTasklet")*/
@@ -254,9 +255,9 @@ public class ImportHVConsumersTasklet implements Tasklet {
 					for(HVConsumer hvc : allMSISDN_Today_Is_BIRTHDATE) {
 						try {
 							// store hvc
-							/*if((new MSISDNValidator()).isFiltered(dao, productProperties, hvc.getValue(), "A")) {*/
+							if((new MSISDNValidator()).isFiltered(dao, productProperties, hvc.getValue(), "HBD")) {
 								new JdbcHVConsumerDao(dao).saveOneHVConsumer(hvc);
-							/*}*/
+							}
 
 						} catch(Throwable th) {
 

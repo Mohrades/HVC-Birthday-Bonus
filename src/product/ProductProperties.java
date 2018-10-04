@@ -25,6 +25,14 @@ public interface ProductProperties extends InitializingBean, DisposableBean {
 
 	public void setOffer_id(final String offer_id) ;
 
+	public void setHbd_serviceClass_include_filter(final String hbd_serviceClass_include_filter) ;
+
+	public void setHbd_db_include_filter(final String hbd_db_include_filter) ;
+
+	public void setHbd_serviceClass_exclude_filter(final String hbd_serviceClass_exclude_filter) ;
+
+	public void setHbd_db_exclude_filter(final String hbd_db_exclude_filter) ;
+
 	public void setAnumber_serviceClass_include_filter(final String anumber_serviceClass_include_filter) ;
 
 	public void setAnumber_db_include_filter(final String anumber_db_include_filter) ;
@@ -84,6 +92,14 @@ public interface ProductProperties extends InitializingBean, DisposableBean {
 	public String getMtnb_irm_database_subscriber_today_filter() ;
 
 	public String getMtnb_irm_database_subscriber_many_days_filter() ;
+
+	public List<String> getHbd_serviceClass_include_filter() ;
+
+	public List<String> getHbd_db_include_filter() ;
+
+	public List<String> getHbd_serviceClass_exclude_filter() ;
+
+	public List<String> getHbd_db_exclude_filter() ;
 
 	public List<String> getAnumber_serviceClass_include_filter() ;
 

@@ -147,7 +147,7 @@ public class InputHandler {
 								endStep(dao, ussd, modele, productProperties, i18n.getMessage("request.unavailable", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
 							}
 						}
-						else endStep(dao, ussd, modele, productProperties, i18n.getMessage("menu.disabled", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);						
+						else endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.disabled", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);						
 					}
 					else if(ussd.getInput().endsWith("*2")) {
 						endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.internal.error", null, null, (hvc.getLanguage() == 2) ? Locale.ENGLISH : Locale.FRENCH), null, null, null, null);
@@ -188,7 +188,15 @@ public class InputHandler {
 	public void statut(MessageSource i18n, ProductProperties productProperties, DAO dao, HVConsumer hvc, USSDRequest ussd, Map<String, Object> modele) {
 		/*HVC hvc = new HVCDAOJdbc(dao).getOneHVC(ussd.getMsisdn(), -1);*/
 
-		if((hvc == null) || (hvc.getBonus() <= 0)) {
+		/*if((hvc == null) || (hvc.getBonus() <= 0)) {
+			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, Locale.FRENCH), null, null, null, null);
+			return;
+		}*/
+		if(hvc == null) {
+			endStep(dao, ussd, modele, productProperties, i18n.getMessage("service.disabled", null, null, Locale.FRENCH), null, null, null, null);
+			return;
+		}
+		else if(hvc.getBonus() <= 0) {
 			endStep(dao, ussd, modele, productProperties, i18n.getMessage("status.failed", null, null, Locale.FRENCH), null, null, null, null);
 			return;
 		}
